@@ -51,6 +51,21 @@ class ContentRelationshipsControllerTest {
     @MockitoBean
     private lateinit var restoreContentUseCase: com.contentplatform.backend.application.content.RestoreContentUseCase
 
+        @MockitoBean
+    private lateinit var publishContentUseCase: com.contentplatform.backend.application.content.PublishContentUseCase
+
+    @MockitoBean
+    private lateinit var editContentUseCase: com.contentplatform.backend.application.content.EditContentUseCase
+
+    @MockitoBean
+    private lateinit var contentAccessUseCase: com.contentplatform.backend.application.content.ContentAccessUseCase
+
+    @MockitoBean
+    private lateinit var browseHistoryUseCase: com.contentplatform.backend.application.history.BrowseHistoryUseCase
+
+    @MockitoBean
+    private lateinit var authorRepository: com.contentplatform.backend.repository.AuthorRepository
+
     @MockitoBean
     private lateinit var userRepository: UserRepository
 
