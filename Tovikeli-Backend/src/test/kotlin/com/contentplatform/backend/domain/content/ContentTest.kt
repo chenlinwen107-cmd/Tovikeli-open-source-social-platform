@@ -352,6 +352,7 @@ class ContentTest {
             parentId = parentId,
             repostOfId = repostOfId,
             quoteOfId = quoteOfId,
+            topicId = null,
             externalCreatedAt = externalCreatedAt,
             createdAt = 1_700_000_000_000L,
             updatedAt = 1_700_000_000_000L,
