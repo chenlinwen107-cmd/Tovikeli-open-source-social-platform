@@ -30,7 +30,7 @@ class GetContentRelationshipsUseCaseTest {
         override fun save(content: Content): Content = content
         override fun findPublicContent(
             instanceId: PublicId?, authorId: PublicId?, hasMedia: Boolean?,
-            cursor: ContentCursor?, limit: Int
+            cursor: ContentCursor?, limit: Int, viewerAuthorId: PublicId?
         ): ContentBrowsePage = ContentBrowsePage(emptyList(), null)
         override fun searchPublicContent(
             query: String, instanceId: PublicId?, authorId: PublicId?, sourceId: PublicId?, limit: Int
