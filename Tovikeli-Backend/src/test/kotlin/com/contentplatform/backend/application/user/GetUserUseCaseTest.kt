@@ -20,6 +20,13 @@ class GetUserUseCaseTest {
 
         override fun findByUsernameCaseInsensitive(username: String): User? = null
 
+        override fun search(query: String, limit: Int): List<User> = emptyList()
+
+        override fun updateProfile(user: User): User {
+            rows[user.id.value] = user
+            return user
+        }
+
         override fun save(user: User): User {
             rows[user.id.value] = user
             return user
@@ -30,6 +37,11 @@ class GetUserUseCaseTest {
         id = PublicId(id),
         username = "alice",
         displayName = "Alice",
+        avatar = null,
+        bio = null,
+        gender = "secret",
+        location = null,
+        cover = null,
         status = status,
         createdAt = 1L,
         updatedAt = 1L
