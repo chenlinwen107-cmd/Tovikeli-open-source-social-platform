@@ -26,7 +26,7 @@ const WD = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'
 function parseDate(s: string | number): Date { return new Date(typeof s === 'number' ? s : (s || '').replace(' ', 'T')); }
 export function fmtEventTime(s: string | number): string {
   const d = parseDate(s);
-  if (Number.isNaN(d.getTime())) return s;
+  if (Number.isNaN(d.getTime())) return String(s);
   const hh = String(d.getHours()).padStart(2, '0');
   const mm = String(d.getMinutes()).padStart(2, '0');
   return `${d.getMonth() + 1}月${d.getDate()}日 ${WD[d.getDay()]} ${hh}:${mm}`;
