@@ -64,7 +64,13 @@ class FeedControllerTest {
     @BeforeEach
     fun connectHomeFeedMockToBrowseFixture() {
         Mockito.lenient().`when`(
-            browseContentUseCase.browse(null, null, null, null, Mockito.anyInt())
+            browseContentUseCase.browse(
+                Mockito.isNull<PublicId>(),
+                Mockito.isNull<PublicId>(),
+                Mockito.isNull<Boolean>(),
+                Mockito.isNull<ContentCursor>(),
+                Mockito.anyInt()
+            )
         ).thenReturn(ContentBrowsePage(emptyList(), null))
 
         Mockito.`when`(homeFeedUseCase.query(Mockito.any(com.contentplatform.backend.application.feed.FeedQuery::class.java)))

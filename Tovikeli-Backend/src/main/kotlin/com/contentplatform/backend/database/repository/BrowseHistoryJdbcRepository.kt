@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Repository
 
 @Repository
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 class BrowseHistoryJdbcRepository(private val jdbc: JdbcTemplate) : BrowseHistoryRepository {
     override fun upsert(userId: PublicId,type:String,targetId:String,title:String,typeLabel:String,link:String,icon:String,authorNickname:String,cover:String,solved:Boolean,viewedAt:Long) {
         jdbc.update(
