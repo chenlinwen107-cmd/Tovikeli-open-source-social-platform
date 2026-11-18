@@ -41,6 +41,9 @@ class SearchControllerTest {
     private lateinit var searchContentUseCase: SearchContentUseCase
 
     @MockitoBean
+    private lateinit var forumUseCase: com.contentplatform.backend.application.forum.ForumUseCase
+
+    @MockitoBean
     private lateinit var userRepository: UserRepository
 
     // ------------------------------------------------------------------
