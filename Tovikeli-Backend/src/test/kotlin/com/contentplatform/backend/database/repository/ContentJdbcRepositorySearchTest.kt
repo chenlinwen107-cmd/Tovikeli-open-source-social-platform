@@ -18,7 +18,7 @@ import org.springframework.jdbc.core.RowMapper
  *
  * No database is involved. [FakeJdbcTemplate] subclasses [JdbcTemplate] and
  * intercepts every query call so the repository code path (SQL construction,
- * parameter binding, full-text matching/ordering emulation, batched
+ * parameter binding, substring matching/ordering emulation, batched
  * content_media loading, aggregate reconstruction) runs against scripted
  * result rows.
  *
@@ -27,13 +27,8 @@ import org.springframework.jdbc.core.RowMapper
  *    instance.allow_index = TRUE (rows carry both content columns and the
  *    joined allow_index flag);
  *  - optional instance / author / source equality filters;
- *  - full-text semantics over content.text: all query tokens must match
- *    (websearch_to_tsquery AND behaviour); relevance = number of matched
- *    tokens (a deterministic stand-in for ts_rank monotonicity);
- *  - ordering relevance DESC, created_at DESC, id DESC; LIMIT <bound>.
- * This is an approximation of real FTS only where it cannot run (stemming and
- * ts_rank weights); the ordering and match semantics used by the assertions
- * are the ones frozen by the SQL.
+ *  - case-insensitive substring matching over content.text (ILIKE);
+ *  - ordering created_at DESC, id DESC; LIMIT <bound>.
  */
 class ContentJdbcRepositorySearchTest {
 
@@ -66,16 +61,14 @@ class ContentJdbcRepositorySearchTest {
         }
 
         private fun isSearchSql(sql: String): Boolean =
-            sql.contains("websearch_to_tsquery")
+            sql.contains("AND c.text ILIKE ?")
 
         private fun isMediaBatchSql(sql: String): Boolean =
             sql.contains("FROM content_media") && sql.contains(" IN (")
 
         /**
-         * Emulates the frozen Postgres semantics. Binding layout:
-         * [instance?, author?, source?, query, query, limit]; the filters that
-         * are actually present are derived from the SQL so the optional args
-         * can be consumed in the fixed instance -> author -> source order.
+         * Emulates the current Postgres substring semantics. Binding layout:
+         * [instance?, author?, source?, %query%, limit].
          */
         private fun emulateSearch(
             sql: String,
@@ -92,11 +85,10 @@ class ContentJdbcRepositorySearchTest {
             val author = if (hasAuthor) nextFilter() else null
             val source = if (hasSource) nextFilter() else null
 
-            // Remaining fixed tail: query, query, limit.
-            val query = args[idx] as String
-            val limit = (args[idx + 2] as Number).toInt()
-
-            val tokens = query.lowercase().split(" ").filter { it.isNotBlank() }
+            // Remaining fixed tail: wildcard-wrapped query, limit.
+            val pattern = args[idx] as String
+            val query = pattern.removePrefix("%").removeSuffix("%").lowercase()
+            val limit = (args[idx + 1] as Number).toInt()
             val publiclyIndexable = rows.filter { row ->
                 row["status"] == "ACTIVE" &&
                     row["visibility"] == "PUBLIC" &&
@@ -107,26 +99,13 @@ class ContentJdbcRepositorySearchTest {
                     (author == null || row["author_id"] == author) &&
                     (source == null || row["source_id"] == source)
             }
-            val matched = filtered.mapNotNull { row ->
-                val text = (row["text"] as String).lowercase()
-                // websearch_to_tsquery defaults to AND semantics: every query
-                // token must be present for the row to match at all. The rank
-                // stand-in is the total number of token occurrences in the
-                // text, which is monotonic with ts_rank coverage.
-                val matchedTokens = tokens.count { text.contains(it) }
-                if (tokens.isNotEmpty() && matchedTokens == tokens.size) {
-                    val rank = tokens.sumOf { token -> text.split(token).size - 1 }
-                    row to rank
-                } else {
-                    null
-                }
+            val matched = filtered.filter { row ->
+                (row["text"] as String).contains(query, ignoreCase = true)
             }
-            val ordered = matched.sortedWith(
-                compareByDescending<Pair<Map<String, Any?>, Int>> { it.second }
-                    .thenByDescending { it.first["created_at"] as Long }
-                    .thenByDescending { it.first["id"] as String }
-            )
-            return ordered.map { it.first }.take(limit)
+            return matched.sortedWith(
+                compareByDescending<Map<String, Any?>> { it["created_at"] as Long }
+                    .thenByDescending { it["id"] as String }
+            ).take(limit)
         }
 
         private fun <T> mapRows(rows: List<Map<String, Any?>>, rowMapper: RowMapper<T>): List<T> {
@@ -223,14 +202,14 @@ class ContentJdbcRepositorySearchTest {
         ContentJdbcRepository(fake)
 
     private fun searchSql(fake: FakeJdbcTemplate): String =
-        fake.executedSql.first { it.contains("websearch_to_tsquery") }
+        fake.executedSql.first { it.contains("AND c.text ILIKE ?") }
 
     // ------------------------------------------------------------------
-    // 1. FTS SQL shape: public filters, join, tsquery, ts_rank ordering
+    // 1. Substring SQL shape: public filters, join, ILIKE, stable ordering
     // ------------------------------------------------------------------
 
     @Test
-    fun searchPublicContent_emitsFtsSqlWithPublicFiltersAndTsRankOrdering() {
+    fun searchPublicContent_emitsSubstringSqlWithPublicFiltersAndStableOrdering() {
         val fake = FakeJdbcTemplate()
         fake.rows = listOf(contentRow("ct_1", createdAt = 1000L, text = "a needle in a haystack"))
         val repo = repository(fake)
@@ -243,26 +222,18 @@ class ContentJdbcRepositorySearchTest {
         assertTrue(sql.contains("c.status = 'ACTIVE'"), "search must filter status = ACTIVE")
         assertTrue(sql.contains("c.visibility = 'PUBLIC'"), "search must filter visibility = PUBLIC")
         assertTrue(sql.contains("i.allow_index = TRUE"), "search must filter instance.allow_index = TRUE")
-        assertTrue(
-            sql.contains("to_tsvector('english', COALESCE(c.text, '')) @@ websearch_to_tsquery('english', ?)"),
-            "search must match content.text through to_tsvector @@ websearch_to_tsquery"
-        )
-        assertTrue(
-            sql.contains(
-                "ORDER BY ts_rank(to_tsvector('english', COALESCE(c.text, '')), websearch_to_tsquery('english', ?)) DESC"
-            ),
-            "search must order by native ts_rank DESC first"
-        )
+        assertTrue(sql.contains("AND c.text ILIKE ?"), "search must use case-insensitive substring matching")
+        assertTrue(sql.contains("ORDER BY c.created_at DESC, c.id DESC"), "search must use stable created_at/id ordering")
         assertTrue(sql.contains("c.created_at DESC, c.id DESC"), "search must keep the frozen stable tie-breakers")
         assertTrue(sql.contains("LIMIT ?"), "search must bind LIMIT as a parameter")
     }
 
     // ------------------------------------------------------------------
-    // 2. Binding: filters (when present) -> query -> query -> limit
+    // 2. Binding: filters (when present) -> wildcard query -> limit
     // ------------------------------------------------------------------
 
     @Test
-    fun searchPublicContent_withoutFilters_bindsQueryThenQueryThenLimit() {
+    fun searchPublicContent_withoutFilters_bindsWildcardQueryThenLimit() {
         val fake = FakeJdbcTemplate()
         fake.rows = listOf(contentRow("ct_1", createdAt = 1000L, text = "needle"))
         val repo = repository(fake)
@@ -270,9 +241,9 @@ class ContentJdbcRepositorySearchTest {
         repo.searchPublicContent("needle", null, null, null, 20)
 
         assertEquals(
-            listOf<Any?>("needle", "needle", 20),
+            listOf<Any?>("%needle%", 20),
             fake.searchQueryArgs.single(),
-            "binding order must be query -> query (ts_rank) -> limit"
+            "binding order must be wildcard query -> limit"
         )
     }
 
@@ -298,9 +269,9 @@ class ContentJdbcRepositorySearchTest {
         assertTrue(sql.contains("AND c.author_id = ?"), "author filter predicate must be present")
         assertTrue(sql.contains("AND c.source_id = ?"), "source filter predicate must be present")
         assertEquals(
-            listOf<Any?>("inst_t", "au_t", "src_t", "needle", "needle", 7),
+            listOf<Any?>("inst_t", "au_t", "src_t", "%needle%", 7),
             fake.searchQueryArgs.single(),
-            "binding order must be instanceId -> authorId -> sourceId -> query -> query -> limit"
+            "binding order must be instanceId -> authorId -> sourceId -> wildcard query -> limit"
         )
     }
 
@@ -313,7 +284,7 @@ class ContentJdbcRepositorySearchTest {
         repo.searchPublicContent("needle", null, null, PublicId("src_t"), 7)
 
         assertEquals(
-            listOf<Any?>("src_t", "needle", "needle", 7),
+            listOf<Any?>("src_t", "%needle%", 7),
             fake.searchQueryArgs.single(),
             "only the present source filter is bound, before the query"
         )
@@ -401,7 +372,7 @@ class ContentJdbcRepositorySearchTest {
     }
 
     // ------------------------------------------------------------------
-    // 5. FTS match semantics and relevance ordering
+    // 5. Substring matching and chronological ordering
     // ------------------------------------------------------------------
 
     @Test
@@ -419,12 +390,12 @@ class ContentJdbcRepositorySearchTest {
     }
 
     @Test
-    fun searchPublicContent_ordersByRelevanceFirstEvenWhenCreatedAtDiffers() {
+    fun searchPublicContent_ordersByCreatedAtDescRatherThanTokenFrequency() {
         val fake = FakeJdbcTemplate()
         fake.rows = listOf(
-            // Higher relevance (4 token occurrences: cat x3 + dog x1) but older.
+            // Older content appears after newer content even if it repeats the query more.
             contentRow("ct_high_rank", createdAt = 1_000L, text = "cat dog cat and cat again"),
-            // Lower relevance (2 token occurrences: cat x1 + dog x1) but newer.
+            // Newer content appears first.
             contentRow("ct_new_low_rank", createdAt = 9_000L, text = "cat dog only")
         )
         val repo = repository(fake)
@@ -432,9 +403,9 @@ class ContentJdbcRepositorySearchTest {
         val result = repo.searchPublicContent("cat dog", null, null, null, 20)
 
         assertEquals(
-            listOf("ct_high_rank", "ct_new_low_rank"),
+            listOf("ct_new_low_rank", "ct_high_rank"),
             result.map { it.id.value },
-            "ts_rank (relevance) must dominate created_at ordering"
+            "created_at DESC must dominate text frequency"
         )
     }
 
@@ -486,7 +457,7 @@ class ContentJdbcRepositorySearchTest {
 
         val result = repo.searchPublicContent("needle", null, null, null, 3)
 
-        assertEquals(listOf<Any?>("needle", "needle", 3), fake.searchQueryArgs.single())
+        assertEquals(listOf<Any?>("%needle%", 3), fake.searchQueryArgs.single())
         assertEquals(3, result.size, "the bounded result must respect the requested limit")
         assertEquals(listOf("ct_5", "ct_4", "ct_3"), result.map { it.id.value })
     }

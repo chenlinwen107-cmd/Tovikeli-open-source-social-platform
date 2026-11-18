@@ -114,6 +114,11 @@ class UserJdbcRepositoryTest {
         "id" to id,
         "username" to username,
         "display_name" to displayName,
+        "avatar" to null,
+        "bio" to null,
+        "gender" to "secret",
+        "location" to null,
+        "cover" to null,
         "status" to status,
         "created_at" to createdAt,
         "updated_at" to updatedAt
@@ -134,7 +139,7 @@ class UserJdbcRepositoryTest {
 
         val user = repo.findById(PublicId("usr_1"))
 
-        assertTrue(template.executedSql.single().contains("SELECT id, username, display_name, status, created_at, updated_at"))
+        assertTrue(template.executedSql.single().contains("SELECT id, username, display_name, avatar, bio, gender, location, cover, status, created_at, updated_at"))
         assertTrue(template.executedSql.single().contains("FROM platform_user"))
         assertTrue(template.executedSql.single().contains("WHERE id = ?"))
         assertEquals(listOf<Any?>("usr_1"), template.queryArgs.single())
