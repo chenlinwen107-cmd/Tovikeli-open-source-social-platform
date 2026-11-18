@@ -79,6 +79,9 @@ class CommentControllerTest {
     private lateinit var getCommentsByContentUseCase: GetCommentsByContentUseCase
 
     @MockitoBean
+    private lateinit var commentLikeUseCase: com.contentplatform.backend.application.comment.CommentLikeUseCase
+
+    @MockitoBean
     private lateinit var userRepository: UserRepository
 
     @BeforeEach
