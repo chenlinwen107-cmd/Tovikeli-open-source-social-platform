@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>登录 · Content Platform</title>
+    <meta name="description" content="登录内容平台。" />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="site-background" aria-hidden="true">
+      <video
+        class="site-background-video"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="metadata"
+      >
+        <source
+          src="/assets/backgrounds/content-platform-bg-v1.mp4"
+          type="video/mp4"
+        />
+      </video>
+    </div>
+    <a class="visually-hidden" href="#main">跳到主要内容</a>
+    <header id="site-header" class="site-header"></header>
+    <main id="main" class="container">
+      <noscript>
+        <p class="notice">本站需要启用 JavaScript 才能登录。</p>
+      </noscript>
+      <div id="page" class="stack"></div>
+    </main>
+    <footer id="site-footer" class="site-footer"></footer>
+    <!-- Optional ?next=<internal path> -->
+    <script type="module" src="/js/pages/login.js"></script>
+  </body>
+</html>

@@ -1,0 +1,101 @@
+import { useState, useEffect } from 'react';
+import Modal from './Modal';
+import { Button } from './heroui';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { useSite } from '../context/SiteContext';
+
+interface AuthForm {
+  username: string;
+  password: string;
+  nickname: string;
+}
+
+export default function AuthModal() {
+  const { authOpen, setAuthOpen, login, register } = useAuth();
+  const toast = useToast();
+  const site = useSite();
+  const regClosed = !site.registrationEnabled;
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [form, setForm] = useState<AuthForm>({ username: '', password: '', nickname: '' });
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+
+  const close = () => { setAuthOpen(false); setErr(''); };
+  const set = (k: keyof AuthForm) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const submit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setErr(''); setBusy(true);
+    try {
+      if (mode === 'login') {
+        const u = await login(form.username.trim(), form.password);
+        toast.ok(`欢迎回来，${u.nickname}`);
+      } else {
+        const u = await register({ username: form.username.trim(), password: form.password, nickname: form.nickname.trim() });
+        toast.ok(`注册成功，欢迎加入，${u.nickname}！`);
+      }
+    } catch (e: any) { setErr(e.message); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <Modal open={authOpen} onClose={close}>
+      <div className="auth-hero">
+        <h2>{mode === 'login' ? '欢迎回来 👋' : '加入 HahaSNS'}</h2>
+        <p>{mode === 'login' ? '登录后即可发动态、参与论坛、私信好友' : '注册一个账号，开启你的轻社交之旅'}</p>
+      </div>
+      <div className="modal-body">
+        {err && <div className="form-err">{err}</div>}
+        <form onSubmit={submit}>
+          {mode === 'register' && (
+            <div className="field">
+              <label>昵称（可选）</label>
+              <input value={form.nickname} onChange={set('nickname')} placeholder="想让大家怎么称呼你？" maxLength={20} />
+            </div>
+          )}
+          <div className="field">
+            <label>用户名</label>
+            <input value={form.username} onChange={set('username')} placeholder="字母、数字、下划线或中文" autoFocus />
+          </div>
+          <div className="field">
+            <label>密码</label>
+            <input type="password" value={form.password} onChange={set('password')} placeholder="至少 6 位" />
+          </div>
+          {mode === 'login' && (
+            <div style={{ textAlign: 'right', marginTop: -6, marginBottom: showForgot ? 8 : 10 }}>
+              <button type="button" onClick={() => setShowForgot((s) => !s)} style={{ fontSize: 12.5, color: 'var(--ink-4)', background: 'none', border: 0, cursor: 'pointer', padding: 0 }}>忘记密码？</button>
+            </div>
+          )}
+          {mode === 'login' && showForgot && (
+            <div className="faint" style={{ fontSize: 12.5, lineHeight: 1.65, border: '1px solid var(--line)', borderRadius: 8, padding: '10px 12px', marginBottom: 12 }}>
+              本站暂未开放邮箱自助找回。如忘记密码，请联系站点管理员协助重置——管理员可在「后台 → 用户」中为任意账号重置登录密码。
+            </div>
+          )}
+          {mode === 'register' && regClosed && (
+            <div className="faint" style={{ fontSize: 13, textAlign: 'center', margin: '4px 0 10px', color: 'var(--ink-3)' }}>本站暂未开放注册</div>
+          )}
+          <Button
+            type="button"
+            size="lg"
+            color="primary"
+            fullWidth
+            className="haha-btn-app"
+            isDisabled={busy || (mode === 'register' && regClosed)}
+            onPress={() => { void submit(); }}
+          >
+            {busy ? '请稍候…' : mode === 'login' ? '登录' : '注册'}
+          </Button>
+        </form>
+        <div className="auth-switch">
+          {mode === 'login' ? (
+            <>还没有账号？<button onClick={() => { setMode('register'); setErr(''); }}>立即注册</button></>
+          ) : (
+            <>已有账号？<button onClick={() => { setMode('login'); setErr(''); }}>去登录</button></>
+          )}
+        </div>
+      </div>
+    </Modal>
+  );
+}

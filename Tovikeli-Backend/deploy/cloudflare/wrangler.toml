@@ -1,0 +1,23 @@
+# Minimal Cloudflare Pages configuration for ContentPlatformBackend.
+#
+# This is deployment configuration only; it defines no Node/Workers build
+# pipeline. Deploy the directory as a Pages project (Advanced Mode):
+#
+#   wrangler pages deploy . --project-name content-platform-backend
+#
+# _worker.js routes:
+#   * same-origin "/api/*" -> Cloud Run origin (env.API_ORIGIN)
+#   * everything else      -> Pages static assets (env.ASSETS)
+#
+# API_ORIGIN is deliberately NOT committed here. Set it per Pages environment
+# (Production / Preview) in the Cloudflare dashboard (Settings -> Environment
+# variables) or with:
+#
+#   wrangler pages secret put API_ORIGIN
+#
+# Expected value: an absolute https origin with no trailing slash, e.g.
+#   https://content-platform-backend-<hash>-<region>.a.run.app
+
+name = "content-platform-backend"
+compatibility_date = "2026-09-13"
+pages_build_output_dir = "."

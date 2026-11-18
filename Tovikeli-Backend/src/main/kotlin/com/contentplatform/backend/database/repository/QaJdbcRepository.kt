@@ -1,0 +1,26 @@
+package com.contentplatform.backend.database.repository
+
+import com.contentplatform.backend.domain.common.PublicId
+import com.contentplatform.backend.repository.*
+import org.springframework.jdbc.core.JdbcTemplate
+
+class QaJdbcRepository(private val jdbc: JdbcTemplate): QaRepository {
+ override fun listQuestions(category:String?,status:String?,sort:String,userId:PublicId?,limit:Int):List<QaQuestion>{
+  val where=mutableListOf<String>();val args=mutableListOf<Any>()
+  if(category!=null){where+="q.category = ?";args+=category}
+  if(status=="solved")where+="EXISTS (SELECT 1 FROM qa_acceptance ac WHERE ac.question_id=q.id)"
+  if(status=="open")where+="NOT EXISTS (SELECT 1 FROM qa_acceptance ac WHERE ac.question_id=q.id)"
+  val order=if(sort=="hot")"answer_count DESC,q.created_at DESC,q.id DESC" else "q.created_at DESC,q.id DESC"
+  args+=limit
+  val clause=if(where.isEmpty())"" else "WHERE "+where.joinToString(" AND ")
+  return jdbc.query("SELECT q.id,q.title,q.category,q.created_at,c.text,a.source_author_id author_id,a.username,COALESCE(a.display_name,a.username) nickname,(SELECT count(*) FROM qa_answer x WHERE x.question_id=q.id) answer_count,(SELECT answer_id FROM qa_acceptance ac WHERE ac.question_id=q.id) best_answer_id FROM qa_question q JOIN content c ON c.id=q.id JOIN author a ON a.id=c.author_id $clause ORDER BY $order LIMIT ?",{rs,_->mapQuestion(rs,userId)},*args.toTypedArray())
+ }
+ override fun findQuestion(id:PublicId,userId:PublicId?):QaQuestion?=jdbc.query("SELECT q.id,q.title,q.category,q.created_at,c.text,a.source_author_id author_id,a.username,COALESCE(a.display_name,a.username) nickname,(SELECT count(*) FROM qa_answer x WHERE x.question_id=q.id) answer_count,(SELECT answer_id FROM qa_acceptance ac WHERE ac.question_id=q.id) best_answer_id FROM qa_question q JOIN content c ON c.id=q.id JOIN author a ON a.id=c.author_id WHERE q.id=?",{rs,_->mapQuestion(rs,userId)},id.value).firstOrNull()
+ override fun listAnswers(questionId:PublicId,userId:PublicId?):List<QaAnswer> = jdbc.query("SELECT a.id,a.question_id,a.created_at,c.text,u.source_author_id author_id,u.username,COALESCE(u.display_name,u.username) nickname,(SELECT count(*) FROM content_interaction i WHERE i.content_id=a.id AND i.type='LIKE') vote_count,(SELECT count(*) FROM qa_acceptance ac WHERE ac.answer_id=a.id)>0 accepted FROM qa_answer a JOIN content c ON c.id=a.id JOIN author u ON u.id=c.author_id WHERE a.question_id=? ORDER BY accepted DESC,vote_count DESC,a.created_at ASC,a.id ASC",{rs,_->mapAnswer(rs,userId)},questionId.value)
+ override fun saveQuestion(id:PublicId,title:String,category:String,createdAt:Long):QaQuestion{jdbc.update("INSERT INTO qa_question(id,title,category,created_at) VALUES(?,?,?,?)",id.value,title.trim(),category,createdAt);return findQuestion(id,null)!!}
+ override fun saveAnswer(id:PublicId,questionId:PublicId,createdAt:Long):QaAnswer{jdbc.update("INSERT INTO qa_answer(id,question_id,created_at) VALUES(?,?,?)",id.value,questionId.value,createdAt);return findAnswer(id,null)!!}
+ override fun accept(questionId:PublicId,answerId:PublicId):Boolean{val exists=jdbc.queryForObject("SELECT count(*) FROM qa_answer WHERE id=? AND question_id=?",Long::class.java,answerId.value,questionId.value)?:0;if(exists==0L)return false;jdbc.update("INSERT INTO qa_acceptance(question_id,answer_id,accepted_at) VALUES(?,?,?) ON CONFLICT(question_id) DO UPDATE SET answer_id=EXCLUDED.answer_id,accepted_at=EXCLUDED.accepted_at",questionId.value,answerId.value,System.currentTimeMillis());return true}
+ override fun findAnswer(id:PublicId,userId:PublicId?):QaAnswer?=jdbc.query("SELECT a.id,a.question_id,a.created_at,c.text,u.source_author_id author_id,u.username,COALESCE(u.display_name,u.username) nickname,(SELECT count(*) FROM content_interaction i WHERE i.content_id=a.id AND i.type='LIKE') vote_count,(SELECT count(*) FROM qa_acceptance ac WHERE ac.answer_id=a.id)>0 accepted FROM qa_answer a JOIN content c ON c.id=a.id JOIN author u ON u.id=c.author_id WHERE a.id=?",{rs,_->mapAnswer(rs,userId)},id.value).firstOrNull()
+ private fun mapQuestion(rs:java.sql.ResultSet,userId:PublicId?):QaQuestion{val body=rs.getString("text")?:"";return QaQuestion(rs.getString("id"),rs.getString("title"),body,body.take(180),rs.getString("category"),if(rs.getString("best_answer_id")!=null)"solved" else "open",QaAuthor(rs.getString("author_id"),rs.getString("username"),rs.getString("nickname")),rs.getLong("answer_count"),0,rs.getLong("created_at"),rs.getString("best_answer_id"),userId?.value==rs.getString("author_id"))}
+ private fun mapAnswer(rs:java.sql.ResultSet,userId:PublicId?):QaAnswer{val id=rs.getString("id");val voted=userId!=null&&(jdbc.queryForObject("SELECT count(*) FROM content_interaction WHERE content_id=? AND user_id=? AND type='LIKE'",Long::class.java,id,userId.value)?:0)>0;return QaAnswer(id,rs.getString("question_id"),rs.getString("text")?:"",QaAuthor(rs.getString("author_id"),rs.getString("username"),rs.getString("nickname")),rs.getLong("vote_count"),voted,rs.getBoolean("accepted"),rs.getLong("created_at"))}
+}

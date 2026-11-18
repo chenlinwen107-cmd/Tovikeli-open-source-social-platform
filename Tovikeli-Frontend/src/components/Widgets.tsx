@@ -1,0 +1,163 @@
+import { useState, useEffect } from 'react';
+import type { CSSProperties } from 'react';
+import { Link } from 'react-router-dom';
+import { APP_VERSION } from '../version';
+import Avatar from './Avatar';
+import Icon from './Icon';
+import FollowButton from './FollowButton';
+import { Badges } from './Identity';
+import { useAuth } from '../context/AuthContext';
+import { useSite } from '../context/SiteContext';
+import { footerLinksOf, pageChangelogRouteOpen } from '../lib/pageEntries';
+import api from '../api/client';
+import { fmtNum } from '../lib/format';
+
+export function HotTopics() {
+  const [topics, setTopics] = useState<any[]>([]);
+  useEffect(() => { api.get('/topics').then(({ data }) => setTopics(data.topics)).catch(() => {}); }, []);
+  if (!topics.length) return null;
+  return (
+    <div className="ui-card widget">
+      <div className="widget-head">
+        <div className="widget-title"><Icon name="fire" size={17} className="tk" /> 热门话题</div>
+        <Link to="/discover" className="widget-more">更多</Link>
+      </div>
+      {topics.slice(0, 8).map((t, i) => (
+        <Link to={`/topic/${encodeURIComponent(t.name)}`} className="topic-row" key={t.id}>
+          <span className={`topic-rank${i < 3 ? ' hot' : ''}`}>{i + 1}</span>
+          <div className="grow">
+            <div className="tn">{t.name}</div>
+            <div className="tc">{fmtNum(t.postCount || t.post_count || 0)} 条动态 · {fmtNum(t.hot)} 热度</div>
+          </div>
+          {i < 3 && <Icon name="fire" size={14} style={{ color: 'var(--like)' }} />}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+export function WhoToFollow() {
+  const { user } = useAuth();
+  const [users, setUsers] = useState<any[]>([]);
+  useEffect(() => { api.get('/users/suggestions').then(({ data }) => setUsers(data.users)).catch(() => {}); }, [user?.id]);
+  if (!users.length) return null;
+  return (
+    <div className="ui-card widget">
+      <div className="widget-head"><div className="widget-title"><Icon name="user" size={16} className="tk" /> 推荐关注</div></div>
+      {users.slice(0, 4).map((u) => (
+        <div className="user-row" key={u.id}>
+          <Avatar user={u} size={40} showV />
+          <div className="meta nowrap">
+            <Link to={`/u/${u.username}`} className="nm uname" style={{ display: 'inline-flex' }}>{u.nickname} <Badges user={u} showTitle={false} /></Link>
+            <div className="sub nowrap">{!u.bio || u.bio.startsWith('emoji:') ? `${fmtNum(u.followers)} 粉丝` : u.bio}</div>
+          </div>
+          <FollowButton user={u} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function TrendingSearch() {
+  const [keywords, setKeywords] = useState<any[]>([]);
+  useEffect(() => { api.get('/search/trending').then(({ data }) => setKeywords(data.keywords)).catch(() => {}); }, []);
+  if (!keywords.length) return null;
+  return (
+    <div className="ui-card widget">
+      <div className="widget-head"><div className="widget-title"><Icon name="search" size={15} className="tk" /> 热搜榜</div></div>
+      <div className="kw-list">
+        {keywords.map((k) => <Link to={`/search?q=${encodeURIComponent(k)}`} className="kw" key={k}>{k}</Link>)}
+      </div>
+    </div>
+  );
+}
+
+export function FlashWidget() {
+  const [items, setItems] = useState<any[]>([]);
+  useEffect(() => { api.get('/flash', { params: { limit: 5 } }).then(({ data }) => setItems(data.flash)).catch(() => {}); }, []);
+  if (!items.length) return null;
+  return (
+    <div className="ui-card widget">
+      <div className="widget-head">
+        <div className="widget-title"><Icon name="bell" size={16} className="tk" /> 社区快报</div>
+        <Link to="/flash" className="widget-more">更多</Link>
+      </div>
+      {items.map((f) => (
+        <Link to="/flash" className="flash-widget-item" key={f.id}>
+          <span className="fw-dot" />
+          <span className="fw-title">{f.title}</span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+export function CircleWidget() {
+  const [items, setItems] = useState<any[]>([]);
+  useEffect(() => { api.get('/circles/suggestions').then(({ data }) => setItems(data.circles)).catch(() => {}); }, []);
+  if (!items.length) return null;
+  return (
+    <div className="ui-card widget">
+      <div className="widget-head">
+        <div className="widget-title"><Icon name="users" size={16} className="tk" /> 推荐圈子</div>
+        <Link to="/circles" className="widget-more">更多</Link>
+      </div>
+      {items.map((c) => (
+        <Link to={`/circle/${encodeURIComponent(c.slug)}`} className="circle-row" key={c.id}>
+          <span className="circle-ico circle-ico-sm" style={{ '--cc': c.color || '#2b54f0' } as CSSProperties}>
+            <Icon name={c.icon || 'circle'} size={16} />
+          </span>
+          <div className="grow nowrap">
+            <div className="cr-name">{c.name}</div>
+            <div className="cr-sub">{fmtNum(c.memberCount)} 成员 · {fmtNum(c.postCount)} 动态</div>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+export function QAWidget() {
+  const [items, setItems] = useState<any[]>([]);
+  useEffect(() => { api.get('/qa/spotlight').then(({ data }) => setItems(data.questions)).catch(() => {}); }, []);
+  if (!items.length) return null;
+  return (
+    <div className="ui-card widget">
+      <div className="widget-head">
+        <div className="widget-title"><Icon name="help" size={16} className="tk" /> 社区问答</div>
+        <Link to="/qa" className="widget-more">更多</Link>
+      </div>
+      {items.map((q) => (
+        <Link to={`/qa/${q.id}`} className="qa-widget-row" key={q.id}>
+          <span className="qa-widget-title">{q.title}</span>
+          <span className="qa-widget-meta">
+            <span>{fmtNum(q.answerCount)} 回答</span>
+          </span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+export function Footer() {
+  const site = useSite();
+  // 与 App PageGate 一致：关页不出现入口（含「问题反馈」）
+  const links = footerLinksOf(site);
+  const changelogRouteOpen = pageChangelogRouteOpen(site);
+  return (
+    <div style={{ padding: '8px 14px', fontSize: 12, color: 'var(--ink-4)', lineHeight: 1.8 }}>
+      <div className="row gap-8" style={{ flexWrap: 'wrap' }}>
+        {links.map((l, i) => (
+          <span key={`${l.label}-${i}`} className="row gap-8">
+            {i > 0 && <span>·</span>}
+            <Link to={l.to} style={{ color: 'var(--ink-3)' }}>{l.label}</Link>
+          </span>
+        ))}
+        {links.length > 0 && <span>·</span>}
+        <span>隐私</span>
+      </div>
+      <div style={{ marginTop: 6 }}>{site.footerText || `© 2026 ${site.name} · 轻社交 · 轻论坛 · 轻社区`} · {changelogRouteOpen ? <Link to="/changelog" className="num" style={{ color: 'var(--ink-3)' }}>{APP_VERSION}</Link> : <span className="num">{APP_VERSION}</span>}</div>
+      {/* 备案号由 Layout 全站底栏统一承载（移动端也可见），此处不再重复渲染，避免桌面双显 */}
+    </div>
+  );
+}

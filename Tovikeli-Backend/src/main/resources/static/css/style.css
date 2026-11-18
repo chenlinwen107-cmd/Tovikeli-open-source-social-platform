@@ -1,0 +1,2684 @@
+/* Content Platform — mobile-first base styles.
+ *
+ * Deliberately framework-free: no build step, no CSS preprocessor, no CDN.
+ * Loaded directly as a static resource from Spring Boot (classpath:/static/).
+ *
+ * Design notes:
+ *  - Mobile-first: base rules target small screens; a single min-width query
+ *    adapts the layout for desktop.
+ *  - Touch-friendly: interactive controls are >= 44px tall.
+ *  - No interaction depends on :hover; :focus-visible and :active are always
+ *    supported for keyboard and touch users.
+ *  - Light theme by default with a compact dark-mode override that follows the
+ *    operating system preference (no in-app theme switch).
+ */
+
+/* ---------------------------------------------------------------- tokens */
+
+/* UI V1 design tokens. Each category has one canonical name; the few legacy
+ * names (--text, --danger, --danger-bg, --radius, --gap) were consolidated into
+ * these, so no value is duplicated. Values are unchanged from the established
+ * UI V1 look, so this layer introduces no visual redesign. */
+:root {
+  /* ---- color ------------------------------------------------------- */
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-alt: #eef0f4;
+  --border: #d8dce3;
+  --text-primary: #16191d;
+  --text-secondary: #454c57;
+  --text-muted: #5c6470;
+  --accent: #2f5bd6;
+  --accent-text: #ffffff;
+  --success: #1a7f4b;
+  --warning: #8a5a00;
+  --error: #b3261e;
+  --error-bg: #fdecea;
+
+  /* ---- typography -------------------------------------------------- */
+  --font-family-base: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-size-page-title: 1.4rem;
+  --font-size-section-title: 1.15rem;
+  --font-size-body: 1rem;
+  --font-size-secondary: 0.875rem;
+  --font-size-caption: 0.8125rem;
+  --font-size-button: 1rem;
+  --line-height-base: 1.5;
+  --line-height-heading: 1.25;
+  --font-weight-medium: 600;
+  --font-weight-bold: 700;
+
+  /* ---- spacing ----------------------------------------------------- */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 18px;
+  --space-xl: 28px;
+
+  /* ---- radius ------------------------------------------------------ */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  /* ---- glass + elevation (UI V1 glass surface system) -------------- */
+  /* Translucent surfaces for panels that sit over the background video. There is
+     NO backdrop-filter by default: plain alpha + border + shadow keeps the
+     compositor off the playing video (the earlier white-flash cause). */
+  --surface-overlay: var(--surface-elevated);
+  --border-subtle: rgba(22, 25, 29, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.82);
+  --glass-bg-strong: rgba(255, 255, 255, 0.92);
+  --glass-border: rgba(255, 255, 255, 0.55);
+  --glass-shadow: 0 6px 24px rgba(16, 24, 40, 0.10);
+  --glass-blur: 10px; /* reserved; used only on the small popup */
+  --shadow-card: var(--shadow);
+  --shadow-panel: 0 10px 30px rgba(16, 24, 40, 0.14);
+  --shadow-overlay: 0 18px 48px rgba(16, 24, 40, 0.18);
+
+  /* ---- misc -------------------------------------------------------- */
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+  --max-width: 760px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171c;
+    --surface: #1c2027;
+    --surface-elevated: #23282f;
+    --surface-alt: #23282f;
+    --border: #333a44;
+    --text-primary: #e8eaee;
+    --text-secondary: #c3c9d4;
+    --text-muted: #a0a8b4;
+    --accent: #7ba2ff;
+    --accent-text: #10131a;
+    --success: #6dd39b;
+    --warning: #e0b24d;
+    --error: #ffb4ab;
+    --error-bg: #3a1d1a;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+    /* glass + elevation (dark) */
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --glass-bg: rgba(28, 32, 39, 0.82);
+    --glass-bg-strong: rgba(28, 32, 39, 0.92);
+    --glass-border: rgba(255, 255, 255, 0.10);
+    --glass-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+    --shadow-panel: 0 10px 30px rgba(0, 0, 0, 0.50);
+    --shadow-overlay: 0 18px 48px rgba(0, 0, 0, 0.60);
+  }
+}
+
+/* Manual dark override (Settings preference). Same tokens as the OS dark set,
+   so the visual language is unchanged; it simply wins over an OS light default. */
+html[data-theme="dark"] {
+  --bg: #14171c;
+  --surface: #1c2027;
+  --surface-elevated: #23282f;
+  --surface-alt: #23282f;
+  --border: #333a44;
+  --text-primary: #e8eaee;
+  --text-secondary: #c3c9d4;
+  --text-muted: #a0a8b4;
+  --accent: #7ba2ff;
+  --accent-text: #10131a;
+  --success: #6dd39b;
+  --warning: #e0b24d;
+  --error: #ffb4ab;
+  --error-bg: #3a1d1a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(28, 32, 39, 0.82);
+  --glass-bg-strong: rgba(28, 32, 39, 0.92);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  --shadow-panel: 0 10px 30px rgba(0, 0, 0, 0.50);
+  --shadow-overlay: 0 18px 48px rgba(0, 0, 0, 0.60);
+}
+
+/* ---------------------------------------------------------------- base */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Theme canvas behind every page. The fixed background video is a body child
+     and paints ABOVE this canvas, so it stays visible on the home page while
+     non-video pages get the correct light/dark background. */
+  background: var(--bg);
+}
+
+
+/* ================================================================
+   UI V1 BACKGROUND VIDEO
+   Mobile-browser-safe fixed viewport layer
+   ================================================================ */
+
+.site-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  /* 100% of the viewport (not 100vw) avoids the classic horizontal overflow
+     caused by 100vw including the scrollbar width. */
+  width: 100%;
+  height: 100vh; /* fallback */
+  /* Cover the LARGEST viewport so a collapsing mobile URL bar can never reveal
+     a white strip at the bottom while scrolling. */
+  height: 100lvh;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  isolation: isolate;
+  /* Dark base so blurred frame edges / a stalled video never show white. */
+  background: #0c0e12;
+}
+
+/* Acrylic veil (Layer 3) — CSS-only atmospheric tint ABOVE the video and below
+ * page content. Translucent gradients only: no backdrop-filter, no canvas, no
+ * second video element, no blur here. */
+.site-background::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 55% at 28% 20%, rgba(122, 150, 255, 0.14), transparent 72%),
+    radial-gradient(55% 60% at 82% 80%, rgba(255, 176, 120, 0.10), transparent 70%),
+    linear-gradient(
+      180deg,
+      rgba(12, 14, 18, 0.34),
+      rgba(12, 14, 18, 0.16) 42%,
+      rgba(12, 14, 18, 0.42)
+    );
+}
+
+.site-background-video {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  /* Acrylic soften (Layer 2): lower detail and slightly reduce contrast /
+     saturation, then scale up a touch so the blur never reveals soft edges at
+     the frame border. `blur()` is the first knob to lower on weak devices. */
+  filter: blur(10px) saturate(0.85) contrast(0.92) brightness(0.9);
+  transform: translate3d(0, 0, 0) scale(1.08);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* The page shell paints above the fixed background video. This is scoped on
+ * purpose: a broad `body > :not(.site-background)` selector also matched the
+ * body-level overlays (.content-sheet, .lightbox) and, because it had higher
+ * specificity, silently overrode their `position: fixed`, pushing them into
+ * normal flow (document growth, scrollbar/width changes, video repaint).
+ *
+ * #site-header is intentionally NOT listed: it is already `position: sticky`
+ * with z-index 10, and adding a higher-specificity `position` here would break
+ * it. #main / #site-footer need the explicit position so they paint above the
+ * background. Overlays keep their own positioning. */
+#main,
+#site-footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* Let the main content grow so the footer always reaches the bottom of the
+   viewport on short pages, while long pages still scroll normally. */
+#main {
+  flex: 1 0 auto;
+}
+
+body {
+  /* Natural page shell: content grows downward, and short pages keep the footer
+     at the bottom of the viewport. Pure CSS (flex) — no JS, no absolute hacks. */
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  /* Space reserved for the fixed mobile application navigation. Removed at the
+   * desktop breakpoint, where that navigation moves into the header. */
+  padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-base);
+}
+
+h1, h2, h3 {
+  line-height: var(--line-height-heading);
+  margin: 0 0 var(--space-sm);
+  overflow-wrap: anywhere;
+}
+
+h1 { font-size: var(--font-size-page-title); }
+h2 { font-size: var(--font-size-section-title); }
+h3 { font-size: var(--font-size-body); }
+
+/* ------------------------------------------------------------ typography */
+
+/* UI V1 text roles. These utilities are additive; the existing elements below
+ * already map onto the same tokens, so no page markup has to change. */
+.text-page-title {
+  font-size: var(--font-size-page-title);
+  line-height: var(--line-height-heading);
+  font-weight: var(--font-weight-bold);
+}
+
+.text-section-title {
+  font-size: var(--font-size-section-title);
+  line-height: var(--line-height-heading);
+  font-weight: var(--font-weight-bold);
+}
+
+.text-body {
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-base);
+}
+
+.text-secondary {
+  font-size: var(--font-size-secondary);
+  line-height: var(--line-height-base);
+  color: var(--text-secondary);
+}
+
+.text-caption {
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-base);
+  color: var(--text-muted);
+}
+
+.text-button {
+  font-size: var(--font-size-button);
+  font-weight: var(--font-weight-medium);
+}
+
+p { margin: 0 0 10px; overflow-wrap: anywhere; }
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover,
+a:focus-visible {
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 14px;
+}
+
+/* ---------------------------------------------------------------- header */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  /* Glass 02 — Header / Navigation */
+  background: var(--glass-bg-strong);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.site-header__bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  font-weight: var(--font-weight-bold);
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.brand:hover { text-decoration: none; }
+
+.site-header__search {
+  flex: 1 1 200px;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Icon-only header navigation controls (UI V1 Global Navigation). The 44px
+ * square keeps a comfortable touch target on mobile; the visible focus ring is
+ * the global :focus-visible rule. Colors reuse the existing design tokens. */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--text-primary);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-decoration: none;
+  flex: 0 0 auto;
+}
+
+.icon-btn:hover {
+  background: var(--surface-alt);
+  text-decoration: none;
+}
+
+.icon-btn:active {
+  transform: translateY(1px);
+}
+
+.icon-btn.is-active,
+.icon-btn[aria-current="page"] {
+  color: var(--accent);
+  background: var(--surface-alt);
+  border-color: var(--border);
+}
+
+/* ------------------------------------------------------------- app nav */
+
+/* UI V1 application navigation: Home / Notifications / Profile / Settings.
+ *
+ * Mobile: a fixed bottom bar, so the top header stays uncluttered (Brand +
+ * Search) and the navigation never covers the article text (body reserves
+ * matching bottom padding). Desktop (>=640px): the SAME element becomes an
+ * inline header navigation. Because it is one element, the mobile and desktop
+ * forms can never be shown at the same time. Search is intentionally absent
+ * here; it remains the header search entry. */
+.app-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  gap: 2px;
+  padding: 2px 6px calc(2px + env(safe-area-inset-bottom, 0px));
+  /* Glass 02 — Navigation (mobile bottom bar) */
+  background: var(--glass-bg-strong);
+  border-top: 1px solid var(--glass-border);
+}
+
+.app-nav__item {
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  color: var(--text-primary);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.app-nav__item:hover {
+  background: var(--surface-alt);
+  text-decoration: none;
+}
+
+.app-nav__item:active {
+  transform: translateY(1px);
+}
+
+.app-nav__item.is-active,
+.app-nav__item[aria-current="page"] {
+  color: var(--accent);
+  background: var(--surface-alt);
+  border-color: var(--border);
+}
+
+/* Icon-only on mobile; the label is revealed on desktop for clarity. */
+.app-nav__label {
+  display: none;
+}
+
+/* Account popover (the Profile entry). It is anchored to the account item, so
+ * the same markup opens upward from the mobile bottom bar and downward from the
+ * desktop header. Deliberately lightweight: no modal, no animation. */
+.app-nav__account {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 44px;
+}
+
+.account__trigger {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.account-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 30;
+  min-width: 160px;
+  padding: 6px;
+  /* Glass 04 — Popup / small overlay. The only place a light backdrop blur is
+     allowed (small, transient, high level). */
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-overlay);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+.account-menu[hidden] {
+  display: none;
+}
+
+.account-menu__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.account-menu__item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 0.9375rem;
+  text-align: left;
+  color: var(--text-primary);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.account-menu__item:hover {
+  background: var(--surface-alt);
+  text-decoration: none;
+}
+
+.account-menu__item--danger {
+  color: var(--error);
+}
+
+.account-menu__user {
+  padding: 6px 12px;
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+  overflow-wrap: anywhere;
+}
+
+.site-footer {
+  margin-top: var(--space-lg);
+  padding: var(--space-md) 0 var(--space-lg);
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ---------------------------------------------------------------- forms */
+
+input[type="text"],
+input[type="search"],
+input[type="password"],
+textarea,
+select {
+  width: 100%;
+  padding: 10px 12px;
+  min-height: 44px;
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: var(--font-size-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.field { margin-bottom: 14px; }
+
+.field__hint {
+  margin-top: 4px;
+  font-size: var(--font-size-caption);
+  color: var(--text-muted);
+}
+
+/* Password visibility toggle (login / register). The wrapper anchors the 44px
+ * icon button inside the input's right edge; the input reserves matching
+ * padding so the typed value never runs under the control. */
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 52px;
+}
+
+.password-field__toggle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 2px;
+  margin: auto 0;
+}
+
+/* ---------------------------------------------------------------- buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 10px 16px;
+  font: inherit;
+  font-size: var(--font-size-button);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: center;
+}
+
+.btn:hover { text-decoration: none; }
+
+.btn:active { transform: translateY(1px); }
+
+.btn[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  color: var(--accent-text);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn--inline {
+  min-height: 40px;
+  padding: 6px 12px;
+  font-size: var(--font-size-secondary);
+}
+
+.btn--block { width: 100%; }
+
+/* ---------------------------------------------------------------- cards */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: var(--space-md);
+  box-shadow: var(--shadow);
+}
+
+.card__title { margin: 0 0 6px; }
+
+.card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+}
+
+.content-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 8px 0 0;
+}
+
+.content-link {
+  display: block;
+  color: var(--text-primary);
+}
+
+.content-link:hover { text-decoration: none; }
+
+.content-link:hover .card { border-color: var(--accent); }
+
+/* ---------------------------------------------------------- content card */
+
+/* UI V1 content card (home feed, search, author and tag listings).
+ *
+ * Hierarchy: author header -> content link (text + real metadata) -> media
+ * placeholder -> direct action bar. Media remains the `.card__media` hydration
+ * target used by feed-media.js (a fixed-ratio MediaFrame); interactive elements
+ * never nest — the action bar and media sit outside the content link. */
+.content-card {
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  /* Glass 01 — Feed Content Card */
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  box-shadow: var(--shadow-card);
+}
+
+.content-card:hover {
+  border-color: var(--accent);
+}
+
+.content-card__author {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  color: inherit;
+  text-decoration: none;
+}
+
+.content-card__author:hover {
+  text-decoration: none;
+}
+
+.content-card__author-avatar {
+  display: flex;
+  flex: 0 0 auto;
+}
+
+.content-card__author .avatar {
+  width: 36px;
+  height: 36px;
+}
+
+.content-card__author-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.content-card__author-name {
+  font-size: var(--font-size-secondary);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.content-card__author-handle {
+  font-size: var(--font-size-caption);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.content-card__main {
+  display: block;
+}
+
+.content-card__text {
+  margin: 0;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-base);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.content-card__text--empty {
+  color: var(--text-muted);
+}
+
+.content-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs) var(--space-sm);
+  margin-top: var(--space-sm);
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+}
+
+/* Direct feed actions: compact icon-first pills with 44px targets. */
+.content-card__actions {
+  margin-top: var(--space-sm);
+}
+
+.content-card__actions .reaction {
+  padding: 8px 12px;
+}
+
+.reaction--comment {
+  text-decoration: none;
+}
+
+.reaction--comment:hover {
+  text-decoration: none;
+}
+
+/* ---------------------------------------------------------------- media */
+
+/* One post = one media presentation:
+ *   1 image  -> .media-single (native ratio, full width, no crop)
+ *   2+ images -> .media-rail  (ONE horizontal track, stable height, no crop) */
+
+.media-item {
+  position: relative;
+  display: block;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--surface-alt);
+}
+
+.media-item--loading { min-height: 160px; }
+
+/* ---- single image -------------------------------------------------------- */
+
+.media-single { min-height: 140px; } /* loose reservation; real height is native */
+
+.media-single img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  background: var(--surface-alt);
+}
+
+/* ---- horizontal rail ----------------------------------------------------- */
+
+.media-rail {
+  --media-rail-h: clamp(200px, 58vw, 240px);
+  display: block;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  border-radius: var(--radius-md);
+}
+
+.media-rail::-webkit-scrollbar { display: none; }
+
+.media-rail__track {
+  display: flex;
+  gap: var(--space-sm);
+  height: var(--media-rail-h);
+}
+
+.media-rail__item {
+  flex: 0 0 auto;
+  height: 100%;
+  scroll-snap-align: start;
+}
+
+.media-rail__item.media-item--loading { width: 70%; min-height: 0; }
+
+/* Native ratio, full rail height, width derived from the image (no crop). */
+.media-rail__item img {
+  display: block;
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  background: var(--surface-alt);
+}
+
+/* ---- metadata (Content Detail), kept OUTSIDE the scrolling track --------- */
+
+.media-item__note {
+  padding: 8px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.media-meta { margin-top: var(--space-sm); }
+
+/* Feed host stays hidden until hydrated. */
+.card__media { margin-top: var(--space-sm); }
+.card__media:empty { display: none; }
+
+@media (min-width: 768px) {
+  .media-rail { --media-rail-h: clamp(280px, 32vw, 320px); }
+}
+
+/* ---- loading / error / unavailable status -------------------------------- */
+
+.media-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  /* Sits above the image but must not swallow clicks when empty (loaded). */
+  pointer-events: none;
+}
+
+.media-status__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.75;
+}
+
+.media-status__icon--spin {
+  animation: media-spin 1.1s linear infinite;
+}
+
+@keyframes media-spin {
+  to { transform: rotate(360deg); }
+}
+
+.media-status__retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--text-secondary);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  /* Re-enable clicks for the retry control only. */
+  pointer-events: auto;
+}
+
+.media-status__retry:hover { background: var(--surface); }
+
+@media (prefers-reduced-motion: reduce) {
+  .media-status__icon--spin { animation: none; }
+}
+
+/* ------------------------------------------------------------- lightbox */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  /* Track the visible (dynamic) viewport and respect safe areas, so mobile
+     browser UI / notches never cover the image. */
+  height: 100dvh;
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  background: rgba(0, 0, 0, 0.82);
+}
+
+.lightbox--open {
+  display: flex;
+  animation: lightbox-fade 0.15s ease;
+}
+
+@keyframes lightbox-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.lightbox__image {
+  /* Fill the padded viewport and CONTAIN the image inside it: small previews are
+     scaled UP to use the available area, large ones down, always preserving the
+     ratio, never cropped, never stretched. */
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.lightbox__close {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top, 0px));
+  right: max(10px, env(safe-area-inset-right, 0px));
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.92);
+  color: #111;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* Lock background scrolling while the preview is open. */
+html.lightbox-open,
+html.lightbox-open body {
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------- bits */
+
+.section {
+  margin: 20px 0;
+}
+
+.section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+}
+
+.badge--muted { color: var(--text-muted); }
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.chip {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  font-size: var(--font-size-caption);
+  color: var(--text-primary);
+}
+
+.chip:hover { text-decoration: none; }
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+
+.author-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.author-row__name {
+  font-weight: var(--font-weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.author-row__sub {
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+  overflow-wrap: anywhere;
+}
+
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: var(--text-muted);
+  font-size: var(--font-size-secondary);
+  margin-top: 8px;
+}
+
+.stat-row strong { color: var(--text-primary); }
+
+/* ---------------------------------------------------------------- states */
+
+.state {
+  padding: 22px 14px;
+  text-align: center;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+}
+
+.state--error {
+  color: var(--error);
+  background: var(--error-bg);
+  border-style: solid;
+  border-color: var(--error);
+  text-align: left;
+}
+
+.state__title {
+  font-weight: var(--font-weight-bold);
+  margin-bottom: 4px;
+}
+
+/* Decorative empty-state glyph (js/icons.js `empty`). The state text carries
+ * the meaning, so the icon stays presentational and inherits currentColor. */
+.state__icon {
+  display: inline-flex;
+  margin-bottom: 8px;
+}
+
+.state__actions { margin-top: 10px; }
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  margin: 0 auto 10px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; }
+}
+
+.notice {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  margin-bottom: 12px;
+  font-size: var(--font-size-secondary);
+}
+
+.notice--error {
+  color: var(--error);
+  background: var(--error-bg);
+  border-color: var(--error);
+}
+
+.notice--success {
+  color: var(--text-primary);
+}
+
+.empty-hint {
+  color: var(--text-muted);
+  font-size: var(--font-size-secondary);
+}
+
+.load-more {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0 0;
+}
+
+.comment {
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.comment:first-child { border-top: none; }
+
+.comment__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+  margin-bottom: 2px;
+}
+
+.comment__text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+.reply-tag {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+/* ------------------------------------------------------------- reactions */
+
+/* Like / Favorite / Repost / Bookmark. Rendered by interaction-bar.js.
+ * State is carried by `aria-pressed`, so the visual "active" style and the
+ * announced state can never disagree. */
+
+.reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: var(--font-size-secondary);
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+
+.reaction:active { transform: translateY(1px); }
+
+.reaction[aria-pressed="true"] {
+  color: var(--accent-text);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.reaction[disabled] {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.reaction__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.reaction__label {
+  font-size: var(--font-size-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.reaction__count {
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.reaction[aria-pressed="true"] .reaction__count { color: inherit; }
+
+.reactions__hint { margin: 8px 0 0; }
+
+.reactions__status .notice { margin: 8px 0 0; }
+
+/* --------------------------------------------------------------- composer */
+
+.composer__label { margin-bottom: 4px; }
+
+.composer__input { min-height: 72px; }
+
+.composer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Secondary per-item actions (Reply / Edit / Delete). Kept smaller than a
+ * primary button because up to three sit in one row, but given enough padding
+ * to stay comfortably tappable. */
+
+.linkbtn {
+  min-height: 36px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  color: var(--accent);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.linkbtn:hover,
+.linkbtn:focus-visible { text-decoration: underline; }
+
+.linkbtn--danger { color: var(--error); }
+
+/* ---------------------------------------------- threaded comments (nested) */
+
+/* comments.js renders the card-less threaded view: the content page is
+ * API-driven, so nested replies are indented with a guide line rather than
+ * given their own cards (which would nest boxes inside boxes on a phone). */
+
+.comment-list { margin-top: 4px; }
+
+.comment__author {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.comment__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 2px;
+}
+
+.comment__replies {
+  margin: 6px 0 0 8px;
+  padding-left: 10px;
+  border-left: 2px solid var(--border);
+}
+
+.comments__status .notice {
+  margin: 8px 0;
+}
+
+.stack > * + * { margin-top: 10px; }
+
+.muted { color: var(--text-muted); }
+.small { font-size: var(--font-size-caption); }
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.visually-hidden:focus,
+.visually-hidden:active {
+  position: fixed !important;
+  top: 8px !important;
+  left: 8px !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 8px 12px !important;
+  clip: auto !important;
+  clip-path: none !important;
+  overflow: visible !important;
+  white-space: normal !important;
+  z-index: 1000 !important;
+}
+
+
+
+
+/* ---------------------------------------------------------------- desktop */
+
+@media (min-width: 640px) {
+  :root { --font-size-page-title: 1.6rem; }
+  .container { padding: 0 18px; }
+  .card { padding: 18px; }
+
+  /* Desktop: the application navigation is inline in the header instead of the
+   * fixed mobile bottom bar, and the reserved bottom space goes away. */
+  body { padding-bottom: 0; }
+
+  /* Mobile keeps the tighter footer; desktop restores the roomier spacing. */
+  .site-footer { margin-top: 28px; padding: 18px 0 26px; }
+
+  .app-nav {
+    position: static;
+    z-index: auto;
+    flex: 0 1 auto;
+    justify-content: flex-start;
+    gap: 2px;
+    padding: 0;
+    background: none;
+    border-top: 0;
+  }
+
+  .app-nav__item {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 10px;
+  }
+
+  .app-nav__account {
+    flex: 0 0 auto;
+  }
+
+  /* The account popover opens downward from the header instead of upward from
+   * the mobile bottom bar. */
+  .account-menu {
+    top: calc(100% + 6px);
+    bottom: auto;
+  }
+
+  .app-nav__label {
+    display: inline;
+    font-size: var(--font-size-secondary);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+  }
+}
+
+/* ---------------------------------------------------------------- icons */
+
+/* UI V1 icon system (js/icons.js). The SVG is colourless and uses
+ * `currentColor`, so every icon inherits the surrounding text colour. This
+ * rule only supplies the default size; a per-call `size` option sets an inline
+ * style which overrides it. */
+.icon {
+  display: inline-block;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: 0 0 auto;
+  vertical-align: middle;
+}
+
+/* ==============================================================
+   Content Sheet V1
+   Feed remains underneath; detail opens as a right-side surface.
+   ============================================================== */
+
+.content-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+  visibility: hidden;
+  /* Delay hiding until the surface has finished sliding out. Opening is
+     immediate. No opacity transition: compositing a full-viewport overlay over
+     the background video is what triggers the compositor white flash. */
+  transition: visibility 280ms;
+}
+
+.content-sheet.is-open {
+  pointer-events: auto;
+  visibility: visible;
+  transition: none;
+}
+
+.content-sheet__surface {
+  width: min(100%, 720px);
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+
+  /* Glass 03 — Content Sheet / Panel. Strong translucent surface, but NO
+     backdrop-filter: alpha-only blending does not force the compositor to
+     sample the playing background video (that blur was the white-flash cause). */
+  background: var(--glass-bg-strong);
+  border-left: 1px solid var(--glass-border);
+
+  box-shadow: var(--shadow-panel);
+
+  transform: translate3d(100%, 0, 0);
+  transition: transform 280ms cubic-bezier(.22, .61, .36, 1);
+  will-change: transform;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.content-sheet.is-open .content-sheet__surface {
+  transform: translate3d(0, 0, 0);
+}
+
+.content-sheet__header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+
+  min-height: 52px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  padding:
+    max(8px, env(safe-area-inset-top, 0px))
+    12px
+    8px;
+
+  /* Opaque overlay header: it is sticky over scrolling sheet content, so it
+     must not let content bleed through. */
+  background: var(--surface-overlay);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.content-sheet__close {
+  flex: 0 0 auto;
+}
+
+.content-sheet__content {
+  min-width: 0;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+html {
+  /* Reserve the scrollbar gutter so opening an overlay never changes the
+     content width (desktop), without moving the page. */
+  scrollbar-gutter: stable;
+}
+
+@media (min-width: 640px) {
+  .content-sheet__surface {
+    width: min(720px, 92vw);
+    border-radius: 18px 0 0 18px;
+    margin: 10px 0 10px 10px;
+    height: calc(100% - 20px);
+  }
+
+  .content-sheet__content {
+    padding: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content-sheet,
+  .content-sheet__surface {
+    transition: none;
+  }
+}
+
+
+/* ==============================================================
+   Home Dashboard — UI V1 Spatial Glass (Step 1 structural shell)
+   ============================================================== */
+
+/* Constant home rail (set once, never toggled), so switching Dashboard/Feed can
+   never change a parent width. */
+body.home-shell #main,
+body.home-shell .site-header .container,
+body.home-shell .site-footer .container {
+  max-width: 1200px;
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+  width: 100%;
+  max-width: 1120px;
+  margin-inline: auto;
+}
+
+/* Feed view keeps the previous effective content width (760 rail minus its
+   14px side padding), so the Feed layout is unchanged. */
+.feed-view {
+  max-width: 732px;
+  margin-inline: auto;
+}
+
+.dashboard__utilities {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.dash-card {
+  --dash-ty: 0px;
+  --dash-r: 0deg;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  /* Glass Surface v1 only: alpha + border + shadow, never blur. */
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-card);
+  color: var(--text-primary);
+  text-decoration: none;
+  transform: translateY(var(--dash-ty)) rotate(var(--dash-r));
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.dash-card:hover {
+  transform: translateY(calc(var(--dash-ty) - 4px)) rotate(var(--dash-r));
+  box-shadow: var(--shadow-panel);
+}
+
+.dash-card:active {
+  transform: translateY(var(--dash-ty)) rotate(var(--dash-r)) scale(0.985);
+}
+
+.dash-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.dash-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.dash-card__eyebrow {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  color: var(--accent);
+}
+
+.dash-card__title {
+  margin: 0;
+  font-size: var(--font-size-section-title);
+  line-height: var(--line-height-heading);
+}
+
+.dash-card__subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-secondary);
+}
+
+.dash-card__cta {
+  margin-top: auto;
+  align-self: flex-start;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: var(--font-size-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.dash-card__actions {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.dash-card--disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.dash-card--disabled:hover,
+.dash-card--disabled:active {
+  transform: translateY(var(--dash-ty)) rotate(var(--dash-r));
+  box-shadow: var(--shadow-card);
+}
+
+.dash-card--hero {
+  z-index: 30;
+  min-height: 240px;
+  background: var(--glass-bg-strong);
+  /* Deepest elevation: layered contact + mid + ambient shadow (token values
+     unchanged; these are scoped depth values). */
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.10),
+    0 14px 34px rgba(0, 0, 0, 0.18),
+    0 30px 72px rgba(0, 0, 0, 0.24);
+  overflow: hidden;
+}
+
+/* Static atmosphere: a low-opacity radial glow, no animation. */
+.dash-card--hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(65% 90% at 100% 0%, rgba(122, 150, 255, 0.18), transparent 62%);
+}
+
+.dash-hero__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.dash-hero__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.dash-hero__title {
+  margin: 0;
+  font-size: clamp(1.4rem, 1.1rem + 3vw, 1.8rem);
+  line-height: var(--line-height-heading);
+}
+
+.dash-hero__subtitle {
+  max-width: 34ch;
+}
+
+.dash-hero__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  min-height: 48px;
+  padding: 10px 18px;
+  margin-top: auto;
+  align-self: stretch;
+}
+
+.dash-hero__arrow {
+  display: inline-flex;
+}
+
+.dash-hero__arrow .icon {
+  transform: rotate(180deg);
+}
+
+/* Static decorative accent (orbital ring + dot), behind the content on mobile. */
+.dash-hero__decor {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.dash-hero__ring {
+  position: absolute;
+  top: -54px;
+  right: -54px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  opacity: 0.5;
+}
+
+.dash-hero__dot {
+  position: absolute;
+  top: 22px;
+  right: 30px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.45;
+}
+
+/* Hover must NOT downgrade the hero depth (the generic hover uses
+   --shadow-panel); keep overlay depth and add a subtle accent highlight. */
+.dash-card--hero:hover {
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.12),
+    0 18px 40px rgba(0, 0, 0, 0.22),
+    0 38px 88px rgba(0, 0, 0, 0.28),
+    0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--glass-border));
+}
+
+.dash-card--hero:active {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 8px 20px rgba(0, 0, 0, 0.16);
+}
+
+.dash-card--profile {
+  z-index: 20;
+  min-height: 170px;
+  background: var(--glass-bg-strong);
+  /* Second elevation: clearly below the hero, above the utilities. */
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.08),
+    0 10px 26px rgba(0, 0, 0, 0.14),
+    0 20px 48px rgba(0, 0, 0, 0.16);
+}
+
+/* Keep the profile's elevation on hover (the generic hover would downgrade it). */
+.dash-card--profile:hover {
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.10),
+    0 14px 34px rgba(0, 0, 0, 0.18),
+    0 26px 60px rgba(0, 0, 0, 0.20);
+}
+
+.dash-card--video,
+.dash-card--info,
+.dash-card--create,
+.dash-card--settings {
+  z-index: 10;
+}
+
+/* ---------------------------------------------------------- video card */
+
+/* Third tier — a deliberate "coming soon" teaser for the future immersive
+   vertical-video space. Presentation only: no player, no media, no request.
+   Two-part composition: miniature portrait viewport (left) + text stack (right). */
+.dash-card--video {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-md);
+  background: var(--glass-bg-strong);
+  /* Slightly closer than the ordinary utilities: cleaner surface + deeper,
+     layered shadow + a subtle inset top highlight. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    0 10px 26px rgba(0, 0, 0, 0.14),
+    0 20px 44px rgba(0, 0, 0, 0.12);
+}
+
+/* Clearly disabled but still intentional. */
+.dash-card--video.dash-card--disabled {
+  opacity: 0.85;
+}
+
+/* Text stack (right). */
+.dash-card--video .dash-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.dash-card--video .dash-card__eyebrow {
+  color: var(--text-muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Title dominates the composition. */
+.dash-card--video .dash-card__title {
+  font-size: var(--font-size-page-title);
+  line-height: var(--line-height-heading);
+}
+
+.dash-card--video .dash-card__subtitle {
+  font-size: var(--font-size-caption);
+}
+
+/* Miniature portrait-video viewport (left), CSS-only, aria-hidden in markup. */
+.dash-card--video .dash-card__frame {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 68px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  background: var(--surface-alt);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    0 6px 16px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+}
+
+/* Inner "screen" gives a subtle layered edge. */
+.dash-card--video .dash-card__screen {
+  position: absolute;
+  inset: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+}
+
+.dash-card--video .dash-card__play {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface-alt);
+  border: 1px solid var(--glass-border);
+}
+
+/* Play triangle via a pseudo-element (no icon asset, no animation). */
+.dash-card--video .dash-card__play::after {
+  content: '';
+  width: 0;
+  height: 0;
+  margin-left: 2px;
+  border-style: solid;
+  border-width: 5px 0 5px 9px;
+  border-color: transparent transparent transparent var(--text-secondary);
+}
+
+/* Visible "coming soon" status chip (does not compete with the title). */
+.dash-card__status {
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-alt);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ---------------------------------------------------- dashboard entrance */
+
+/* "Rise through the water": a single one-time entrance. The keyframes reuse the
+ * card's own --dash-ty / --dash-r so the FINAL geometry is identical to the
+ * static layout; once every card finishes, JS adds `.is-entered`, which removes
+ * the animation for good (no replay when returning from the Feed). */
+.dashboard:not(.is-entered) .dash-card {
+  animation: dash-enter 420ms cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+}
+
+.dashboard:not(.is-entered) .dash-card--hero { animation-delay: 0ms; }
+.dashboard:not(.is-entered) .dash-card--profile { animation-delay: 60ms; }
+.dashboard:not(.is-entered) .dash-card--video { animation-delay: 120ms; }
+.dashboard:not(.is-entered) .dash-card--info { animation-delay: 170ms; }
+.dashboard:not(.is-entered) .dash-card--create { animation-delay: 220ms; }
+.dashboard:not(.is-entered) .dash-card--settings { animation-delay: 270ms; }
+
+@keyframes dash-enter {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--dash-ty) + 24px)) rotate(var(--dash-r)) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(var(--dash-ty)) rotate(var(--dash-r)) scale(1);
+  }
+}
+
+/* Reduced motion: present immediately in the exact final state. */
+@media (prefers-reduced-motion: reduce) {
+  .dashboard:not(.is-entered) .dash-card {
+    animation: none;
+  }
+}
+
+.dash-back {
+  display: inline-block;
+  margin-bottom: var(--space-sm);
+  color: var(--accent);
+  font-size: var(--font-size-secondary);
+  text-decoration: none;
+}
+
+/* Desktop / tablet: asymmetric bento, vertically centred in the viewport with
+   generous breathing room. Sizes are deliberately smaller than the first pass
+   (~85%); utilities are lighter still. */
+@media (min-width: 768px) {
+  .dashboard {
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--space-lg);
+    padding: var(--space-xl) 0;
+    /* Independent, stable rail: never touches the viewport edges (>=24px each
+       side) and does not depend on the Feed rail. */
+    width: min(1120px, calc(100% - 48px));
+    max-width: 1120px;
+    /* A "space in the viewport": centre the card cluster, keep big margins. */
+    min-height: 78vh;
+    align-content: center;
+  }
+
+  .dashboard__utilities {
+    display: contents;
+  }
+
+  .dash-card--hero {
+    grid-column: 1 / 8;
+    grid-row: 1 / 3;
+    min-height: 340px;
+    --dash-r: 0deg;
+    /* Desktop: two zones — content left, decorative accent right. */
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: var(--space-lg);
+  }
+
+  .dash-hero__content {
+    max-width: 62%;
+  }
+
+  .dash-hero__title {
+    font-size: clamp(1.5rem, 1.15rem + 1.4vw, 2.1rem);
+  }
+
+  .dash-hero__cta {
+    align-self: flex-start;
+    min-height: 44px;
+  }
+
+  .dash-hero__decor {
+    position: relative;
+    inset: auto;
+    flex: 0 0 auto;
+    width: 120px;
+  }
+  .dash-card--profile { grid-column: 8 / 13; grid-row: 1; min-height: 132px; --dash-ty: 16px; --dash-r: 0.3deg; }
+  .dash-card--video { grid-column: 8 / 13; grid-row: 2; --dash-ty: -14px; }
+  .dash-card--info { grid-column: 1 / 5; grid-row: 3; --dash-ty: 22px; }
+  .dash-card--create { grid-column: 5 / 9; grid-row: 3; --dash-ty: 8px; --dash-r: -0.2deg; }
+  .dash-card--settings { grid-column: 9 / 13; grid-row: 3; --dash-ty: 26px; }
+
+  /* Utilities read as the lightest tier. */
+  .dash-card--video,
+  .dash-card--info,
+  .dash-card--create,
+  .dash-card--settings {
+    padding: var(--space-sm) var(--space-md);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-card,
+  .dash-card:hover,
+  .dash-card:active {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* ==============================================================
+   Auth space (UI V1 Step 3A) — immersive, single centered Glass panel
+   ============================================================== */
+
+/* Remove the dashboard chrome on auth pages so the panel is the only focus. */
+body.auth-page {
+  padding-bottom: 0;
+}
+
+body.auth-page .site-header,
+body.auth-page .app-nav,
+body.auth-page .site-footer {
+  display: none;
+}
+
+body.auth-page #main {
+  padding: 0 16px;
+}
+
+/* Center the panel in the viewport (video stays behind, untouched). */
+body.auth-page #page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+}
+
+.auth-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: min(460px, 100%);
+  padding: var(--space-xl);
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-overlay);
+}
+
+.auth-panel__brand {
+  margin: 0;
+  font-size: var(--font-size-secondary);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.auth-panel__title {
+  margin: 0;
+  font-size: var(--font-size-page-title);
+  line-height: var(--line-height-heading);
+}
+
+/* Login / Register switcher: two real links, a clear active segment. */
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xs);
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-alt);
+  border: 1px solid var(--border-subtle);
+}
+
+.auth-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  font-size: var(--font-size-secondary);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  transition: color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.auth-tab:hover {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.auth-tab[aria-current="page"] {
+  color: var(--accent);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.auth-panel .btn {
+  min-height: 48px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .auth-panel {
+    animation: auth-enter 180ms ease-out both;
+  }
+}
+
+@keyframes auth-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Desktop: keep the panel centred with generous edges; optional micro-rotation. */
+@media (min-width: 768px) {
+  .auth-panel {
+    /* Desktop only: larger presence, still centered with wide margins and the
+       same content density. Mobile keeps the base min(460px, 100%). */
+    width: min(540px, 100%);
+    padding: 36px;
+    transform: rotate(-0.2deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-panel {
+    animation: none;
+    transform: none;
+  }
+}
+
+/* ==============================================================
+   Profile page (UI V1 Step 7-B) — a light Profile surface over the video
+   ============================================================== */
+
+/* Wider rail on the profile page only (main + header/footer stay aligned). */
+body.is-profile #main,
+body.is-profile .site-header .container,
+body.is-profile .site-footer .container {
+  max-width: 880px;
+}
+
+/* Breathing room above the card; the video stays visible around it. */
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-md) 0 var(--space-xl);
+}
+
+/* The user's own space: a complete light surface sitting on the background. */
+.profile-shell {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-overlay);
+  overflow: hidden;
+}
+
+/* Cover = header visual of the card (not a full-screen background). */
+.profile-cover {
+  position: relative;
+  height: clamp(120px, 26vw, 180px);
+  background: var(--surface-alt);
+  overflow: hidden;
+}
+
+.profile-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 120% at 16% 0%, rgba(122, 150, 255, 0.26), transparent 62%),
+    radial-gradient(55% 110% at 92% 100%, rgba(255, 176, 120, 0.16), transparent 66%);
+}
+
+/* Identity: only the avatar overlaps the cover; text stays in the card body. */
+.profile-identity {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: 0 var(--space-lg);
+}
+
+.profile-identity__avatar {
+  flex: 0 0 auto;
+  width: 88px;
+  height: 88px;
+  /* Straddle the cover edge — avatar only; the name never touches the cover. */
+  margin-top: -44px;
+  font-size: 2rem;
+  font-weight: var(--font-weight-bold);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-text);
+  background: var(--accent);
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  text-transform: uppercase;
+  box-shadow: var(--shadow-card);
+}
+
+.profile-identity__text {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding-top: var(--space-sm);
+}
+
+.profile-identity__name {
+  margin: 0;
+  font-size: var(--font-size-page-title);
+  line-height: var(--line-height-heading);
+  overflow-wrap: anywhere;
+}
+
+.profile-identity__handle {
+  margin: 2px 0 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-secondary);
+}
+
+.profile-identity__id {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+  overflow-wrap: anywhere;
+}
+
+.profile-identity__bio {
+  margin: var(--space-sm) 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-secondary);
+}
+
+/* Compact action row, below the identity/bio. */
+.profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  padding: var(--space-lg) var(--space-lg) 0;
+}
+
+.profile-actions .btn[disabled] {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Compact social stats row (value above label), explicit placeholders. */
+.profile-stats {
+  display: flex;
+  gap: var(--space-xl);
+  list-style: none;
+  margin: 0;
+  padding: var(--space-md) var(--space-lg) 0;
+}
+
+.profile-stats li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-stats strong {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.profile-stats span {
+  font-size: var(--font-size-caption);
+  color: var(--text-muted);
+}
+
+/* Tabs: flat row in the card with a light divider; active = accent underline. */
+.profile-tabs {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+  padding: 0 var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.profile-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.profile-tab {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 8px 10px;
+  margin-bottom: -1px; /* sit on the divider */
+  font: inherit;
+  font-size: var(--font-size-secondary);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.profile-tab:hover {
+  color: var(--text-primary);
+}
+
+.profile-tab[aria-selected="true"] {
+  color: var(--accent);
+  font-weight: var(--font-weight-bold);
+  border-bottom-color: var(--accent);
+}
+
+.profile-content {
+  min-height: 160px;
+  padding: var(--space-lg);
+}
+
+@media (min-width: 768px) {
+  .profile-page {
+    padding-top: 48px; /* clear breathing room above the card on desktop */
+  }
+}
+
+/* ==============================================================
+   Simple content pages (Video / Info / Create / Settings)
+   Light surface over the shared background video.
+   ============================================================== */
+
+.page-shell {
+  margin: var(--space-lg) 0 var(--space-xl);
+  padding: var(--space-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-overlay);
+}
+
+.page-shell h1 {
+  margin-top: 0;
+}
+
+.page-shell .state {
+  margin-top: var(--space-md);
+}
+
+@media (min-width: 768px) {
+  .page-shell {
+    margin-top: var(--space-xl);
+    padding: var(--space-xl);
+  }
+}
+
+/* ---------------------------------------------------------------- create */
+
+/* Create / Publish. The editor is the page's primary action, so it gets more
+ * room than the shared composer default. Sections are separated by a single
+ * hairline rule; no extra cards are stacked inside the page shell. */
+
+.create-head {
+  margin-bottom: var(--space-lg);
+}
+
+.create-head h1 {
+  margin: 0 0 4px;
+}
+
+.create-block {
+  margin-top: var(--space-lg);
+}
+
+.create-block + .create-block {
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border);
+}
+
+.create-block__title {
+  margin: 0 0 8px;
+  font-size: var(--font-size-secondary);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.create-text {
+  min-height: 180px;
+}
+
+.create-media {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 4px;
+}
+
+.create-login {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 10px;
+}
+
+.create-login p {
+  margin: 0;
+}
+
+/* ---------------------------------------------------------- notifications */
+
+.notifications-note {
+  margin: 10px 0 0;
+}
+
+/* ---------------------------------------------------------------- settings */
+
+/* Wider rail on the settings page only (aligned with Profile). */
+body.is-settings #main,
+body.is-settings .site-header .container,
+body.is-settings .site-footer .container {
+  max-width: 880px;
+}
+
+.settings-section {
+  margin-top: var(--space-lg);
+}
+
+.settings-section__title {
+  margin: 0;
+  padding-bottom: var(--space-sm);
+  font-size: var(--font-size-section-title);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-row__text {
+  min-width: 0;
+}
+
+.settings-row__label {
+  font-weight: var(--font-weight-medium);
+}
+
+.settings-row__desc {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: var(--font-size-secondary);
+}
+
+.settings-row__control {
+  flex: 0 0 auto;
+}
+
+.settings-value {
+  display: inline-block;
+  max-width: 42vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: var(--font-size-secondary);
+}
+
+.settings-status {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-alt);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Switch: real local toggles (preferences); notifications stay disabled. */
+.settings-switch {
+  position: relative;
+  width: 56px;
+  height: 44px; /* comfortable touch target */
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.settings-switch::before {
+  content: '';
+  position: absolute;
+  top: 9px;
+  left: 4px;
+  right: 4px;
+  height: 26px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.settings-switch::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 7px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.settings-switch[aria-checked="true"]::before {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.settings-switch[aria-checked="true"]::after {
+  transform: translateX(22px);
+  background: var(--accent-text);
+}
+
+.settings-switch[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.settings-select {
+  min-width: 160px;
+}
+
+/* Light, wrap-friendly section note (Notifications / Privacy / About). */
+.settings-note {
+  margin: var(--space-sm) 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+}
+
+/* Settings preferences (applied by settings.js via html classes / data-theme). */
+
+/* Background preference: hide the shared video + acrylic veil only. */
+html.no-background .site-background {
+  display: none;
+}
+
+/* Reduced-motion preference (manual override; mirrors the OS media query). */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ---------------------------------------------------------------- video */
+
+/* Wider rail on the video page only (aligned with Profile / Settings). */
+body.is-video #main,
+body.is-video .site-header .container,
+body.is-video .site-footer .container {
+  max-width: 880px;
+}
+
+.video-page__title {
+  margin: 0 0 var(--space-xs);
+}
+
+/* Responsive feed: single column on mobile, 2–3 columns on desktop. */
+.video-feed {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
+  gap: var(--space-lg);
+  margin-top: var(--space-lg);
+}
+
+.video-card {
+  min-width: 0;
+}
+
+/* CSS-only cover (dark media surface); no image, no video, no request. */
+.video-card__cover {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: linear-gradient(160deg, #23272e, #14171c);
+  overflow: hidden;
+}
+
+.video-card__badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+.video-card__play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.video-card__play::after {
+  content: '';
+  width: 0;
+  height: 0;
+  margin-left: 3px;
+  border-style: solid;
+  border-width: 8px 0 8px 13px;
+  border-color: transparent transparent transparent rgba(255, 255, 255, 0.9);
+}
+
+.video-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding-top: var(--space-sm);
+}
+
+.video-card__title {
+  margin: 0;
+  font-size: var(--font-size-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.video-card__meta {
+  margin: 0;
+}
+
+.video-card__actions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: 2px;
+  color: var(--text-muted);
+}
+
+.video-card__action {
+  display: inline-flex;
+}

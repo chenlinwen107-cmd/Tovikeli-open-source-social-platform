@@ -1,0 +1,46 @@
+# Docker build context exclusions for ContentPlatformBackend.
+#
+# Keep this list narrow: the Gradle Wrapper (gradlew, gradlew.bat, gradle/),
+# the Gradle build files (settings.gradle.kts, build.gradle.kts) and src/ MUST
+# remain in the context or the image build will fail.
+
+# Build output ---------------------------------------------------------------
+build/
+.gradle/
+.kotlin/
+
+# IDE / editor ---------------------------------------------------------------
+.idea/
+*.iml
+.vscode/
+
+# VCS ------------------------------------------------------------------------
+.git/
+.gitignore
+.gitattributes
+
+# Packaged snapshots and archives -------------------------------------------
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
+# Unrelated tools / workers (not part of the backend runtime) ----------------
+cf-worker-wizard
+_worker.js
+stage*
+content-platform-backend-stage21-c1-final.zip
+content-platform-backend-stage21-c2-final.zip
+content-platform-backend-stage21-c2-fixed.zip
+ContentPlatformBackend-Stage17-Final-Full.zip
+
+# Docs, scratch files and local project metadata -----------------------------
+docs/
+*.log
+*.tmp
+HELP.md
+.devx/
+.opencode-tasks/
+
+# Deployment sources (Cloudflare Pages); not part of the backend image -------
+deploy/

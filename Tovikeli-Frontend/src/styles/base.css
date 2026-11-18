@@ -1,0 +1,137 @@
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+
+html, body { overflow-x: clip; max-width: 100%; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: manipulation; }
+body {
+  font-family: var(--font-sans);
+  background: var(--page);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: -.005em;
+  /* 全局兜底：超长不可断字符串（长 URL/长英文 ID/无空格昵称）在任意容器内换行而非撑破布局。
+     overflow-wrap 可继承，故一处生效全站；不影响正常 CJK/英文换行。 */
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "tnum" 1, "cv11" 1;
+  transition: background .3s var(--ease-out), color .3s var(--ease-out);
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+/* Display typography — applied to prominent headings & numerics.
+   Latin glyphs render in Space Grotesk; CJK gracefully falls back. */
+.brand-name, .page-title, .section-head h2, .modal-title,
+.profile-name, .widget-title, .board-info .bn, .board-hero h1,
+.thread-detail h1, .checkin-streak, .mc-stat .v, .pstat b {
+  font-family: var(--font-display);
+  letter-spacing: -.02em;
+}
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+/* Tap responsiveness — kill the 300ms delay, no tap-highlight flash */
+a, button, input, textarea, select, [role="button"] { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+/* Keyboard accessibility: a single, instant, high-contrast focus ring.
+   Mouse users don't see it (:focus-visible), keyboard users always do. */
+:focus { outline: none; }
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--brand);
+  border-radius: var(--r-xs);
+}
+.nav-icon-btn:focus-visible, .rail-item:focus-visible { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--brand); }
+/* Text inputs use the app's soft focus ring, not the high-contrast button ring
+   (text fields always trigger :focus-visible on click, so the loud ring read as "AI default"). */
+input:focus-visible, textarea:focus-visible, select:focus-visible { box-shadow: 0 0 0 3px var(--brand-soft); border-radius: revert; }
+/* The composer is a borderless inline box — highlight the card on focus, not the textarea. */
+.composer textarea:focus-visible { box-shadow: none; }
+.ui-card.composer:focus-within { border-color: color-mix(in srgb, var(--brand) 40%, var(--line)); }
+input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
+/* 合理默认：任何未显式设置 resize 的 textarea 只许竖向拉伸，杜绝横向拖拽撑破卡片/弹窗布局
+   （聊天/发布框各自的 resize:none、字段的 resize:vertical 因选择器更具体仍会覆盖本条）。 */
+textarea { resize: vertical; }
+img { display: block; max-width: 100%; }
+ul, ol { list-style: none; }
+::selection { background: var(--brand-soft); color: var(--brand-strong); }
+
+/* Scrollbar — subtle, theme-adaptive(translucent ink works in light & dark, 两套皮肤都协调) */
+* { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent; }
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink) 22%, transparent); border-radius: 999px; border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--ink) 40%, transparent); background-clip: padding-box; }
+
+/* ---------- Cards ---------- */
+.ui-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-xs);
+}
+
+/* ---------- Badges ---------- */
+.ui-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  height: 18px; padding: 0 6px; border-radius: var(--r-xs);
+  font-size: 11px; font-weight: 700; line-height: 1;
+}
+.badge-v { background: var(--verify); color: #fff; }
+.badge-vip { background: linear-gradient(135deg, #ffd989, var(--gold)); color: #5e3d00; }
+.badge-lv {
+  background: var(--gold-soft); color: var(--gold-deep);
+  font-family: var(--font-num); letter-spacing: .2px;
+}
+.badge-mod { background: var(--brand-soft); color: var(--brand-strong); }
+.badge-title { background: linear-gradient(135deg, var(--coral), #ff8f5e); color: #fff; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.badge-elite { background: var(--like-soft); color: var(--like); }
+
+/* ---------- Utilities ---------- */
+.muted { color: var(--ink-3); }
+.faint { color: var(--ink-4); }
+.row { display: flex; align-items: center; }
+.col { display: flex; flex-direction: column; }
+.gap-4 { gap: 4px; } .gap-6 { gap: 6px; } .gap-8 { gap: 8px; } .gap-12 { gap: 12px; } .gap-16 { gap: 16px; }
+.grow { flex: 1; }
+.spacer { flex: 1; }
+.center { display: flex; align-items: center; justify-content: center; }
+.nowrap { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.divider { height: 1px; background: var(--line); }
+.hide-mobile { }
+.num { font-family: var(--font-num); }
+
+/* fade-in for content */
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise .32s cubic-bezier(.2,.7,.3,1) both; }
+
+@keyframes pop { 0% { transform: scale(.8); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+.pop { animation: pop .3s var(--ease-out); }
+
+/* Respect reduced-motion: collapse spatial motion to a quick fade */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .rise { animation: none; }
+}
+
+/* 安全 markdown 渲染块 */
+.safe-md { font-size: 15px; line-height: 1.75; color: var(--ink); word-break: break-word; }
+.safe-md h1, .safe-md h2, .safe-md h3, .safe-md h4 { font-weight: 800; margin: 1em 0 .4em; letter-spacing: -.02em; }
+.safe-md h1 { font-size: 1.45em; } .safe-md h2 { font-size: 1.25em; } .safe-md h3 { font-size: 1.1em; }
+.safe-md p { margin: .6em 0; }
+.safe-md ul, .safe-md ol { margin: .5em 0; padding-left: 1.4em; }
+.safe-md li { margin: .25em 0; }
+.safe-md code { font-family: var(--font-mono, ui-monospace, monospace); font-size: .9em; background: var(--surface-2); padding: 1px 6px; border-radius: 4px; }
+.safe-md pre { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 12px 14px; overflow: auto; margin: .8em 0; }
+.safe-md pre code { background: none; padding: 0; }
+.safe-md blockquote { border-left: 3px solid var(--brand); margin: .8em 0; padding: .2em 0 .2em 12px; color: var(--ink-2); }
+.safe-md a { color: var(--brand); font-weight: 600; }
+.safe-md img { max-width: 100%; border-radius: var(--r-sm); margin: .5em 0; }
+.safe-md hr { border: none; border-top: 1px solid var(--line); margin: 1.2em 0; }
