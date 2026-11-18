@@ -45,6 +45,9 @@ class UserControllerTest {
     private lateinit var getUserUseCase: GetUserUseCase
 
     @MockitoBean
+    private lateinit var updateUserProfileUseCase: com.contentplatform.backend.application.user.UpdateUserProfileUseCase
+
+    @MockitoBean
     private lateinit var userRepository: UserRepository
 
     // ------------------------------------------------------------------
