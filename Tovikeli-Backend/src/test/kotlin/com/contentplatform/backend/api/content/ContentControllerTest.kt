@@ -740,7 +740,7 @@ class ContentControllerTest {
         mockMvc.perform(post("/api/v1/contents/{contentId}/delete", "ct_123").sessionAttr(SessionAttributes.CURRENT_USER_ID, "usr_testuser"))
             .andExpect(status().isNoContent)
 
-        Mockito.verify(deleteContentUseCase).delete(id)
+        Mockito.verify(deleteContentUseCase).delete(id, PublicId("usr_testuser"))
     }
 
     @Test
@@ -751,7 +751,7 @@ class ContentControllerTest {
         mockMvc.perform(post("/api/v1/contents/{contentId}/delete", "ct_missing").sessionAttr(SessionAttributes.CURRENT_USER_ID, "usr_testuser"))
             .andExpect(status().isNotFound)
 
-        Mockito.verify(deleteContentUseCase).delete(id)
+        Mockito.verify(deleteContentUseCase).delete(id, PublicId("usr_testuser"))
     }
 
     @Test
@@ -762,7 +762,7 @@ class ContentControllerTest {
         mockMvc.perform(post("/api/v1/contents/{contentId}/delete", "ct_123").sessionAttr(SessionAttributes.CURRENT_USER_ID, "usr_testuser"))
             .andExpect(status().isBadRequest)
 
-        Mockito.verify(deleteContentUseCase).delete(id)
+        Mockito.verify(deleteContentUseCase).delete(id, PublicId("usr_testuser"))
     }
 
     @Test
