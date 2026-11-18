@@ -14,6 +14,7 @@ import java.util.Base64
 import kotlin.test.assertEquals
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasSize
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
@@ -60,6 +61,21 @@ class FeedControllerTest {
     @MockitoBean
     private lateinit var userRepository: UserRepository
 
+    @BeforeEach
+    fun connectHomeFeedMockToBrowseFixture() {
+        Mockito.lenient().`when`(
+            browseContentUseCase.browse(null, null, null, null, Mockito.anyInt())
+        ).thenReturn(ContentBrowsePage(emptyList(), null))
+
+        Mockito.`when`(homeFeedUseCase.query(Mockito.any(com.contentplatform.backend.application.feed.FeedQuery::class.java)))
+            .thenAnswer { invocation ->
+                val query = invocation.getArgument<com.contentplatform.backend.application.feed.FeedQuery>(0)
+                val page = browseContentUseCase.browse(null, null, null, query.cursor, query.limit)
+                com.contentplatform.backend.application.feed.FeedResult.Ready(
+                    com.contentplatform.backend.application.feed.FeedPage(page.contents, page.nextCursor)
+                )
+            }
+    }
     // ------------------------------------------------------------------
     // Fixtures
     // ------------------------------------------------------------------

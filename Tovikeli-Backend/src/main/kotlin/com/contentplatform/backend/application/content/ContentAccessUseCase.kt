@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service
 enum class ContentAccessState { ALLOWED, LOCKED, FORBIDDEN }
 
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 class ContentAccessUseCase(
     private val contentRepository: ContentRepository,
     private val authorRepository: AuthorRepository

@@ -6,6 +6,7 @@ import com.contentplatform.backend.repository.BrowseHistoryRepository
 import org.springframework.stereotype.Service
 
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 class BrowseHistoryUseCase(private val history: BrowseHistoryRepository) {
     fun record(userId:PublicId,type:String,targetId:String,title:String,typeLabel:String,link:String,icon:String,authorNickname:String="",cover:String="",solved:Boolean=false) =
         history.upsert(userId,type,targetId,title,typeLabel,link,icon,authorNickname,cover,solved,System.currentTimeMillis())
