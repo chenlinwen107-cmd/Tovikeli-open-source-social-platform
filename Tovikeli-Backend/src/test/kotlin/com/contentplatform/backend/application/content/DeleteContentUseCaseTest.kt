@@ -1,6 +1,8 @@
 package com.contentplatform.backend.application.content
 
 import com.contentplatform.backend.domain.common.PublicId
+import com.contentplatform.backend.domain.author.Author
+import com.contentplatform.backend.repository.AuthorRepository
 import com.contentplatform.backend.domain.content.Content
 import com.contentplatform.backend.domain.content.ContentLifecycleResult
 import com.contentplatform.backend.domain.content.ContentStatus
@@ -18,9 +20,9 @@ class DeleteContentUseCaseTest {
     fun `delete active content returns SUCCESS`() {
         val content = content(ContentStatus.ACTIVE)
         val repository = FakeContentRepository(content)
-        val useCase = DeleteContentUseCase(repository, transactionTemplate())
+        val useCase = DeleteContentUseCase(repository, FakeAuthorRepository(), transactionTemplate())
 
-        val result = useCase.delete(content.id)
+        val result = useCase.delete(content.id, PublicId("caller_user"))
 
         assertEquals(ContentLifecycleResult.SUCCESS, result)
         assertEquals(1, repository.updateStatusCount)
@@ -32,7 +34,7 @@ class DeleteContentUseCaseTest {
         val repository = FakeContentRepository(null)
         val useCase = DeleteContentUseCase(repository, transactionTemplate())
 
-        val result = useCase.delete(PublicId("ct_not_exist"))
+        val result = useCase.delete(PublicId("ct_not_exist"), PublicId("caller_user"))
 
         assertEquals(ContentLifecycleResult.NOT_FOUND, result)
         assertEquals(0, repository.updateStatusCount)
@@ -74,6 +76,24 @@ class DeleteContentUseCaseTest {
         assertEquals(0, repository.updateStatusCount)
     }
 
+    private class FakeAuthorRepository : AuthorRepository {
+        private val author = Author(
+            id = PublicId("au_author_1"),
+            instanceId = PublicId("inst_local"),
+            sourceAuthorId = "caller_user",
+            name = "Caller",
+            username = "caller",
+            displayName = null,
+            url = null,
+            avatar = null,
+            bio = null,
+            status = null
+        )
+        override fun findById(id: PublicId): Author? = author.takeIf { it.id == id }
+        override fun findByInstanceAndSourceAuthorId(instanceId: PublicId, sourceAuthorId: String): Author? =
+            author.takeIf { it.instanceId == instanceId && it.sourceAuthorId == sourceAuthorId }
+        override fun save(author: Author): Author = author
+    }
     private fun content(status: ContentStatus): Content = Content.createFromAdapter(
         instanceIdValue = "inst_misskey_io",
         sourceContentId = "sc-1",
