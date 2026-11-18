@@ -11,6 +11,7 @@ data class CreateCollectionRequest(val title: String, val description: String = 
 data class AddCollectionItemRequest(val targetType: String, val targetId: String)
 
 @RestController
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 @RequestMapping("/api/v1/collections")
 class CollectionController(private val collections: CollectionUseCase) {
     @GetMapping

@@ -13,6 +13,7 @@ data class CirclePostRequest(val content: String, val mediaIds: List<String> = e
 data class CircleChatRequest(val content: String)
 
 @RestController
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 @RequestMapping("/api/v1/circles")
 class CircleController(
     private val circles: CircleUseCase,

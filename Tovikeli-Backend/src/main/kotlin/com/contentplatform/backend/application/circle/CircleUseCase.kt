@@ -8,6 +8,7 @@ import com.contentplatform.backend.repository.CircleRepository
 import org.springframework.stereotype.Service
 
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 class CircleUseCase(private val circles:CircleRepository,private val publish:PublishContentUseCase,private val deleteContent:DeleteContentUseCase){
  private val categories=setOf("兴趣","科技","生活","创作","同城")
  private val icons=setOf("compass","camera","code","rocket","heart","book","fire","edit","forum","coin")

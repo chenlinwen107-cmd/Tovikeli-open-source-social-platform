@@ -10,6 +10,7 @@ import com.contentplatform.backend.repository.UserRepository
 import org.springframework.stereotype.Service
 
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 class DirectMessagingUseCase(
     private val conversationRepository: DirectConversationRepository,
     private val messageRepository: DirectMessageRepository,

@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value
 import java.net.URI
 
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 class NoticeUseCase(
     private val notices: NoticeRepository,
     @Value("\${tovikeli.admin-username:admin}") private val adminUsername: String

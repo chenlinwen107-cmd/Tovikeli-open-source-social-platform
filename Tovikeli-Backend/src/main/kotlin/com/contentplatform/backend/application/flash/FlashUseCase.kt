@@ -9,6 +9,7 @@ import java.net.URI
 import java.util.UUID
 
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 class FlashUseCase(private val flash: FlashRepository,@Value("\${tovikeli.admin-username:admin}") private val adminUsername: String) {
     private val categories=setOf("公告","功能","活动","精选","教程","动态")
     fun list(category:String?,query:String?,limit:Int)=flash.list(category,query,limit)

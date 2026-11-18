@@ -6,6 +6,7 @@ import com.contentplatform.backend.repository.AuthorRepository
 import org.springframework.stereotype.Service
 
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 class UpdateUserProfileUseCase(
     private val userRepository: UserRepository,
     private val authorRepository: AuthorRepository

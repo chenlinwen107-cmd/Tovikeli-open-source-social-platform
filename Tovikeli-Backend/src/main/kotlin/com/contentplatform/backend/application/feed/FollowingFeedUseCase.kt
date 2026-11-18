@@ -8,6 +8,7 @@ import com.contentplatform.backend.repository.FollowRepository
 import org.springframework.stereotype.Service
 
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 class FollowingFeedUseCase(
     private val followRepository: FollowRepository,
     private val contentRepository: ContentRepository,

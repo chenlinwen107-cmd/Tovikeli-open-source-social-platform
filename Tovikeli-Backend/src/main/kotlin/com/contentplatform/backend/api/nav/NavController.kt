@@ -14,6 +14,7 @@ data class NavCategoryRequest(val name: String, val icon: String = "compass")
 data class NavLinkRequest(val categoryId: String, val title: String, val url: String)
 
 @RestController
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 @RequestMapping("/api/v1/nav")
 class NavController(private val nav: NavUseCase) {
 

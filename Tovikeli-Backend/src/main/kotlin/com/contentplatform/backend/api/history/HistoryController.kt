@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 @RequestMapping("/api/v1/history")
 class HistoryController(private val history: BrowseHistoryUseCase) {
     @GetMapping

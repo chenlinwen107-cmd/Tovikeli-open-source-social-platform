@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 @RequestMapping("/api/v1/notifications")
 class NotificationController(private val notifications:NotificationUseCase) {
     @GetMapping fun list(@RequestParam(defaultValue="50") limit:Int,req:HttpServletRequest):ResponseEntity<Any> = try {

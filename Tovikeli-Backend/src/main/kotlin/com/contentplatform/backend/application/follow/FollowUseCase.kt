@@ -9,6 +9,7 @@ import com.contentplatform.backend.application.notification.NotificationUseCase
 import org.springframework.stereotype.Service
 
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 class FollowUseCase(
     private val followRepository: FollowRepository,
     private val userRepository: UserRepository,

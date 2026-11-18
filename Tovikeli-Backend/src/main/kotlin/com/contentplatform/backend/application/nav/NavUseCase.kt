@@ -10,6 +10,7 @@ import java.net.URI
 import java.util.UUID
 
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 class NavUseCase(
     private val nav: NavRepository,
     @Value("\${tovikeli.admin-username:admin}") private val adminUsername: String

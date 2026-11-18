@@ -4,6 +4,7 @@ import com.contentplatform.backend.domain.feed.FeedType
 import org.springframework.stereotype.Service
 
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 class HomeFeedUseCase(
     private val recommended: RecommendedFeedUseCase,
     private val latest: LatestFeedUseCase,

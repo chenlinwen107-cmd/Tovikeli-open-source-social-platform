@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*
 data class CreateEventRequest(val title:String,val cover:String="",val location:String="",val category:String,val startAt:Long,val endAt:Long,val capacity:Int=0,val fee:Double=0.0,val online:Boolean=false,val description:String="")
 
 @RestController
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 @RequestMapping("/api/v1/events")
 class EventController(private val events:EventUseCase, private val history: BrowseHistoryUseCase) {
     @GetMapping fun list(@RequestParam(required=false) filter:String?,@RequestParam(required=false) category:String?,@RequestParam(defaultValue="20") limit:Int,req:HttpServletRequest):ResponseEntity<Any> = try {

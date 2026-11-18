@@ -5,6 +5,7 @@ import com.contentplatform.backend.repository.ContentRepository
 import org.springframework.stereotype.Service
 
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 class VideoFeedUseCase(
     private val contentRepository: ContentRepository
 ) : FeedUseCase {

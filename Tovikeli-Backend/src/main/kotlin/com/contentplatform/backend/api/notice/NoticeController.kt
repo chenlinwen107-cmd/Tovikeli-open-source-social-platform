@@ -11,6 +11,7 @@ data class NoticeRequest(val title:String,val body:String="",val level:String="i
 data class NoticePatch(val title:String?=null,val body:String?=null,val level:String?=null,val link:String?=null,val linkLabel:String?=null,val active:Boolean?=null,val pinned:Boolean?=null)
 
 @RestController
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 @RequestMapping("/api/v1/notices")
 class NoticeController(private val notices:NoticeUseCase){
     @GetMapping fun active():ResponseEntity<Any> = ResponseEntity.ok(mapOf("notices" to notices.active().map(::mapNotice)))

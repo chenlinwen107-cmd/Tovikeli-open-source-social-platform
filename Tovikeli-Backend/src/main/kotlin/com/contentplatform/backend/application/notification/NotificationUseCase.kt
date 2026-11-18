@@ -6,6 +6,7 @@ import com.contentplatform.backend.repository.NotificationRepository
 import org.springframework.stereotype.Service
 
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.url"])
 class NotificationUseCase(private val notifications:NotificationRepository) {
     fun list(userId:PublicId,limit:Int)=notifications.list(userId,limit)
     fun markRead(userId:PublicId,id:Long)=notifications.markRead(userId,id)
