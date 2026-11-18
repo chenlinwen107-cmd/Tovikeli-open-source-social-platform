@@ -34,14 +34,17 @@ jobs:
       - name: Audit npm dependencies (advisory)
         run: |
           npm audit --json > npm-audit.json || true
-          node -e 'const a=require("./npm-audit.json"); const v=a.vulnerabilities||{}; console.log(JSON.stringify({counts:a.metadata?.vulnerabilities, packages:Object.entries(v).map(([name,x])=>({name,severity:x.severity,direct:x.isDirect,range:x.range,fixAvailable:x.fixAvailable}))},null,2))'
+          npm audit --omit=dev --json > npm-audit-production.json || true
+          node -e 'for (const f of ["npm-audit.json","npm-audit-production.json"]) { const a=require("./"+f); const v=a.vulnerabilities||{}; console.log(f, JSON.stringify({counts:a.metadata?.vulnerabilities, packages:Object.entries(v).map(([name,x])=>({name,severity:x.severity,direct:x.isDirect,range:x.range,fixAvailable:x.fixAvailable}))},null,2)); }'
 
       - name: Upload npm audit report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: frontend-npm-audit
-          path: Tovikeli-Frontend/npm-audit.json
+          path: |
+            Tovikeli-Frontend/npm-audit.json
+            Tovikeli-Frontend/npm-audit-production.json
           if-no-files-found: ignore
           retention-days: 7
 
