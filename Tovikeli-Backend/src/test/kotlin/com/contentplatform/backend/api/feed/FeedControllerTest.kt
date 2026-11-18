@@ -49,6 +49,9 @@ class FeedControllerTest {
     private lateinit var browseContentUseCase: BrowseContentUseCase
 
     @MockitoBean
+    private lateinit var homeFeedUseCase: com.contentplatform.backend.application.feed.HomeFeedUseCase
+
+    @MockitoBean
     private lateinit var feedRefillTrigger: FeedRefillTrigger
 
     // The MVC slice also pulls in the project's AuthenticationFilter, which
