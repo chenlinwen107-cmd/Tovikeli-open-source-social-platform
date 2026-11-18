@@ -74,7 +74,15 @@ class FeedControllerTest {
             )
         ).thenReturn(ContentBrowsePage(emptyList(), null))
 
-        Mockito.`when`(homeFeedUseCase.query(Mockito.any(com.contentplatform.backend.application.feed.FeedQuery::class.java)))
+        Mockito.`when`(homeFeedUseCase.query(
+            Mockito.any(com.contentplatform.backend.application.feed.FeedQuery::class.java)
+                ?: com.contentplatform.backend.application.feed.FeedQuery(
+                    com.contentplatform.backend.domain.feed.FeedType.LATEST,
+                    null,
+                    null,
+                    20
+                )
+        ))
             .thenAnswer { invocation ->
                 val query = invocation.getArgument<com.contentplatform.backend.application.feed.FeedQuery>(0)
                 val page = browseContentUseCase.browse(null, null, null, query.cursor, query.limit)
