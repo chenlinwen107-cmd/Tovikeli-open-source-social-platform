@@ -1,0 +1,25 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Build output and dependencies
+node_modules/
+dist/
+build/
+.gradle/
+.vite/
+.kotlin/
+
+# Local data, logs and editor files
+data/
+*.log
+*.tmp
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
