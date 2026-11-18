@@ -124,6 +124,7 @@ class UserInteractionControllerTest {
         parentId = null,
         repostOfId = null,
         quoteOfId = null,
+        topicId = null,
         externalCreatedAt = null,
         createdAt = 1000L,
         updatedAt = 1000L,
