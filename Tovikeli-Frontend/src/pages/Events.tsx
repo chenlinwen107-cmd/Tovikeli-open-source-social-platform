@@ -24,14 +24,14 @@ export const evIcon = (cat: string) => EV_CAT[cat]?.icon || 'calendar';
 
 const WD = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 function parseDate(s: string | number): Date { return new Date(typeof s === 'number' ? s : (s || '').replace(' ', 'T')); }
-export function fmtEventTime(s: string): string {
+export function fmtEventTime(s: string | number): string {
   const d = parseDate(s);
   if (Number.isNaN(d.getTime())) return s;
   const hh = String(d.getHours()).padStart(2, '0');
   const mm = String(d.getMinutes()).padStart(2, '0');
   return `${d.getMonth() + 1}月${d.getDate()}日 ${WD[d.getDay()]} ${hh}:${mm}`;
 }
-export function dateBadge(s: string): { m: string; d: string } {
+export function dateBadge(s: string | number): { m: string; d: string } {
   const d = parseDate(s);
   if (Number.isNaN(d.getTime())) return { m: '', d: '' };
   return { m: `${d.getMonth() + 1}月`, d: String(d.getDate()) };
@@ -59,7 +59,7 @@ function SignupBtn({ ev, onToggle }: { ev: CommunityEvent; onToggle: (e: React.M
   return <button className="ev-btn join" onClick={onToggle}>报名</button>;
 }
 
-function EventCard({ ev, onToggle }: { ev: CommunityEvent; onToggle: (id: number, signed: boolean) => void }) {
+function EventCard({ ev, onToggle }: { ev: CommunityEvent; onToggle: (id: string, signed: boolean) => void }) {
   const badge = dateBadge(ev.startAt);
   const st = STATUS_LABEL[ev.status];
   const [coverErr, setCoverErr] = useState(false); // 封面加载失败优雅降级为分类色占位
@@ -106,7 +106,7 @@ export default function Events() {
   }, [filter, cat]);
   useEffect(() => { load(); }, [load]);
 
-  const toggleSignup = async (id: number, signed: boolean) => {
+  const toggleSignup = async (id: string, signed: boolean) => {
     if (!user) return setAuthOpen(true);
     try {
       const { data } = await api.post<{ event: CommunityEvent }>(`/events/${id}/${signed ? 'cancel' : 'signup'}`);
