@@ -79,6 +79,9 @@ class AuthenticationFlowIntegrationTest {
     // --- CommentController collaborators (mocked; only Create is exercised) ---
 
     @MockitoBean
+    private lateinit var commentLikeUseCase: com.contentplatform.backend.application.comment.CommentLikeUseCase
+
+    @MockitoBean
     private lateinit var createCommentUseCase: CreateCommentUseCase
 
     @MockitoBean
