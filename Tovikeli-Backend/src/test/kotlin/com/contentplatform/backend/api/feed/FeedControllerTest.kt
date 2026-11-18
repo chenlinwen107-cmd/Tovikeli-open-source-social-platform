@@ -69,7 +69,8 @@ class FeedControllerTest {
                 Mockito.isNull<PublicId>(),
                 Mockito.isNull<Boolean>(),
                 Mockito.isNull<ContentCursor>(),
-                Mockito.anyInt()
+                Mockito.anyInt(),
+                Mockito.isNull<PublicId>()
             )
         ).thenReturn(ContentBrowsePage(emptyList(), null))
 
