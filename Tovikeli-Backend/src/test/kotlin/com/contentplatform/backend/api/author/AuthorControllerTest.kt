@@ -48,6 +48,9 @@ class AuthorControllerTest {
     private lateinit var authorContentListingUseCase: AuthorContentListingUseCase
 
     @MockitoBean
+    private lateinit var getLocalAuthorByUserIdUseCase: com.contentplatform.backend.application.author.GetLocalAuthorByUserIdUseCase
+
+    @MockitoBean
     private lateinit var userRepository: UserRepository
 
     // ------------------------------------------------------------------
