@@ -38,6 +38,13 @@ class CreateUserUseCaseTest {
             }
         }
 
+        override fun search(query: String, limit: Int): List<User> = emptyList()
+
+        override fun updateProfile(user: User): User {
+            rows[user.id.value] = user
+            return user
+        }
+
         override fun save(user: User): User {
             saveCount++
             if (duplicateKeyOnSave) {
