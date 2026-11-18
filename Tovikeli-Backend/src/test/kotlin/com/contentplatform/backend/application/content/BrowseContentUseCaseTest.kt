@@ -51,7 +51,8 @@ class BrowseContentUseCaseTest {
             authorId: PublicId?,
             hasMedia: Boolean?,
             cursor: ContentCursor?,
-            limit: Int
+            limit: Int,
+            viewerAuthorId: PublicId?
         ): ContentBrowsePage {
             lastBrowseInstanceId = instanceId
             lastBrowseAuthorId = authorId
@@ -90,7 +91,7 @@ class BrowseContentUseCaseTest {
     fun browse_withoutArguments_passesNullsAndLimitThrough() {
         val repo = FakeContentRepository()
         repo.browseResult = ContentBrowsePage(listOf(content("ct_1")), null)
-        val uc = BrowseContentUseCase(repo)
+        val uc = BrowseContentUseCase(repo, org.mockito.Mockito.mock(com.contentplatform.backend.repository.AuthorRepository::class.java))
 
         uc.browse(null, null, null, null, 42)
 
@@ -109,7 +110,7 @@ class BrowseContentUseCaseTest {
     fun browse_withInstanceFilter_passesInstanceIdThroughUnchanged() {
         val repo = FakeContentRepository()
         repo.browseResult = ContentBrowsePage(listOf(content("ct_1")), null)
-        val uc = BrowseContentUseCase(repo)
+        val uc = BrowseContentUseCase(repo, org.mockito.Mockito.mock(com.contentplatform.backend.repository.AuthorRepository::class.java))
         val instanceId = PublicId("inst_misskey_io")
 
         uc.browse(instanceId, null, null, null, 7)
@@ -125,7 +126,7 @@ class BrowseContentUseCaseTest {
     fun browse_withAuthorFilter_passesAuthorIdThroughUnchanged() {
         val repo = FakeContentRepository()
         repo.browseResult = ContentBrowsePage(listOf(content("ct_1")), null)
-        val uc = BrowseContentUseCase(repo)
+        val uc = BrowseContentUseCase(repo, org.mockito.Mockito.mock(com.contentplatform.backend.repository.AuthorRepository::class.java))
         val authorId = PublicId("au_author_1")
 
         uc.browse(null, authorId, null, null, 7)
@@ -141,7 +142,7 @@ class BrowseContentUseCaseTest {
     fun browse_withHasMediaTrue_passesTrueThroughUnchanged() {
         val repo = FakeContentRepository()
         repo.browseResult = ContentBrowsePage(listOf(content("ct_1")), null)
-        val uc = BrowseContentUseCase(repo)
+        val uc = BrowseContentUseCase(repo, org.mockito.Mockito.mock(com.contentplatform.backend.repository.AuthorRepository::class.java))
 
         uc.browse(null, null, true, null, 7)
 
@@ -156,7 +157,7 @@ class BrowseContentUseCaseTest {
     fun browse_withHasMediaFalse_passesFalseThroughUnchanged() {
         val repo = FakeContentRepository()
         repo.browseResult = ContentBrowsePage(listOf(content("ct_1")), null)
-        val uc = BrowseContentUseCase(repo)
+        val uc = BrowseContentUseCase(repo, org.mockito.Mockito.mock(com.contentplatform.backend.repository.AuthorRepository::class.java))
 
         uc.browse(null, null, false, null, 7)
 
@@ -175,7 +176,7 @@ class BrowseContentUseCaseTest {
     fun browse_withCursor_passesCursorThroughUnchanged() {
         val repo = FakeContentRepository()
         repo.browseResult = ContentBrowsePage(listOf(content("ct_1")), null)
-        val uc = BrowseContentUseCase(repo)
+        val uc = BrowseContentUseCase(repo, org.mockito.Mockito.mock(com.contentplatform.backend.repository.AuthorRepository::class.java))
         val cursor = ContentCursor(createdAt = 1_757_000_000_123L, id = PublicId("ct_1"))
 
         uc.browse(null, null, null, cursor, 7)
@@ -195,7 +196,7 @@ class BrowseContentUseCaseTest {
     fun browse_withAllArguments_passesAllThroughUnchanged() {
         val repo = FakeContentRepository()
         repo.browseResult = ContentBrowsePage(listOf(content("ct_1")), null)
-        val uc = BrowseContentUseCase(repo)
+        val uc = BrowseContentUseCase(repo, org.mockito.Mockito.mock(com.contentplatform.backend.repository.AuthorRepository::class.java))
         val instanceId = PublicId("inst_misskey_io")
         val authorId = PublicId("au_author_1")
         val cursor = ContentCursor(createdAt = 123L, id = PublicId("ct_1"))
@@ -221,7 +222,7 @@ class BrowseContentUseCaseTest {
             nextCursor = ContentCursor(createdAt = 456L, id = PublicId("ct_2"))
         )
         repo.browseResult = stored
-        val uc = BrowseContentUseCase(repo)
+        val uc = BrowseContentUseCase(repo, org.mockito.Mockito.mock(com.contentplatform.backend.repository.AuthorRepository::class.java))
 
         val result = uc.browse(null, null, null, null, 10)
 
@@ -236,7 +237,7 @@ class BrowseContentUseCaseTest {
     @Test
     fun browse_whenNothingBrowsable_returnsEmptyPage() {
         val repo = FakeContentRepository()
-        val uc = BrowseContentUseCase(repo)
+        val uc = BrowseContentUseCase(repo, org.mockito.Mockito.mock(com.contentplatform.backend.repository.AuthorRepository::class.java))
 
         val result = uc.browse(null, null, null, null, 10)
 

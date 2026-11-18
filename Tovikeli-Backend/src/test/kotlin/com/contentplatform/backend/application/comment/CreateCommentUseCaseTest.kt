@@ -44,6 +44,23 @@ class CreateCommentUseCaseTest {
         override fun findByUsernameCaseInsensitive(username: String): User? =
             null
 
+        override fun search(query: String, limit: Int): List<User> = emptyList()
+
+
+
+        override fun updateProfile(user: User): User {
+
+
+            rows[user.id.value] = user
+
+
+            return user
+
+
+        }
+
+
+
         override fun save(user: User): User {
             rows[user.id.value] = user
             return user
@@ -82,7 +99,8 @@ class CreateCommentUseCaseTest {
             authorId: PublicId?,
             hasMedia: Boolean?,
             cursor: ContentCursor?,
-            limit: Int
+            limit: Int,
+            viewerAuthorId: PublicId?
         ): ContentBrowsePage =
             throw UnsupportedOperationException("not used")
 
@@ -211,6 +229,16 @@ class CreateCommentUseCaseTest {
             id = id,
             username = if (id == userId) "alice" else "bob",
             displayName = null,
+            avatar = null,
+
+            bio = null,
+
+            gender = "secret",
+
+            location = null,
+
+            cover = null,
+
             status = UserStatus.ACTIVE,
             createdAt = 1L,
             updatedAt = 1L
@@ -235,6 +263,7 @@ class CreateCommentUseCaseTest {
             parentId = null,
             repostOfId = null,
             quoteOfId = null,
+            topicId = null,
             externalCreatedAt = null,
             createdAt = 1L,
             updatedAt = 1L,
@@ -267,7 +296,8 @@ class CreateCommentUseCaseTest {
             contentRepository = contents,
             instanceRepository = instances,
             commentRepository = comments,
-            transactionTemplate = TransactionTemplate(txManager)
+            transactionTemplate = TransactionTemplate(txManager),
+            notifications = org.mockito.Mockito.mock(com.contentplatform.backend.application.notification.NotificationUseCase::class.java)
         )
 
         fun withInteractableTarget() = apply {

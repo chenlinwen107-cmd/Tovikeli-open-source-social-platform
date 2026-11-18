@@ -53,7 +53,8 @@ class AuthorContentListingUseCaseTest {
             authorId: PublicId?,
             hasMedia: Boolean?,
             cursor: ContentCursor?,
-            limit: Int
+            limit: Int,
+            viewerAuthorId: PublicId?
         ): ContentBrowsePage {
             lastBrowseInstanceId = instanceId
             lastBrowseAuthorId = authorId
@@ -223,7 +224,8 @@ class AuthorContentListingUseCaseTest {
                 authorId: PublicId?,
                 hasMedia: Boolean?,
                 cursor: ContentCursor?,
-                limit: Int
+                limit: Int,
+            viewerAuthorId: PublicId?
             ): ContentBrowsePage = throw IllegalStateException("database unavailable")
 
             override fun findById(id: PublicId): Content? = null

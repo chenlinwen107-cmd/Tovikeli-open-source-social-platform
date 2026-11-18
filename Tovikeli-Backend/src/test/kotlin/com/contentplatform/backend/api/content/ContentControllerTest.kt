@@ -87,6 +87,16 @@ class ContentControllerTest {
             id = PublicId("usr_testuser"),
             username = "testuser",
             displayName = "Test User",
+            avatar = null,
+
+            bio = null,
+
+            gender = "secret",
+
+            location = null,
+
+            cover = null,
+
             status = UserStatus.ACTIVE,
             createdAt = 1_000_000L,
             updatedAt = 1_000_000L
@@ -725,7 +735,7 @@ class ContentControllerTest {
     @Test
     fun deleteContent_whenSuccess_returns204() {
         val id = PublicId("ct_123")
-        Mockito.`when`(deleteContentUseCase.delete(id)).thenReturn(ContentLifecycleResult.SUCCESS)
+        Mockito.`when`(deleteContentUseCase.delete(id, PublicId("usr_testuser"))).thenReturn(ContentLifecycleResult.SUCCESS)
 
         mockMvc.perform(post("/api/v1/contents/{contentId}/delete", "ct_123").sessionAttr(SessionAttributes.CURRENT_USER_ID, "usr_testuser"))
             .andExpect(status().isNoContent)
@@ -736,7 +746,7 @@ class ContentControllerTest {
     @Test
     fun deleteContent_whenNotFound_returns404() {
         val id = PublicId("ct_missing")
-        Mockito.`when`(deleteContentUseCase.delete(id)).thenReturn(ContentLifecycleResult.NOT_FOUND)
+        Mockito.`when`(deleteContentUseCase.delete(id, PublicId("usr_testuser"))).thenReturn(ContentLifecycleResult.NOT_FOUND)
 
         mockMvc.perform(post("/api/v1/contents/{contentId}/delete", "ct_missing").sessionAttr(SessionAttributes.CURRENT_USER_ID, "usr_testuser"))
             .andExpect(status().isNotFound)
@@ -747,7 +757,7 @@ class ContentControllerTest {
     @Test
     fun deleteContent_whenInvalidTransition_returns400() {
         val id = PublicId("ct_123")
-        Mockito.`when`(deleteContentUseCase.delete(id)).thenReturn(ContentLifecycleResult.INVALID_TRANSITION)
+        Mockito.`when`(deleteContentUseCase.delete(id, PublicId("usr_testuser"))).thenReturn(ContentLifecycleResult.INVALID_TRANSITION)
 
         mockMvc.perform(post("/api/v1/contents/{contentId}/delete", "ct_123").sessionAttr(SessionAttributes.CURRENT_USER_ID, "usr_testuser"))
             .andExpect(status().isBadRequest)

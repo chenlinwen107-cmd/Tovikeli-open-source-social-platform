@@ -25,6 +25,11 @@ class GetUserContentInteractionStateUseCaseTest {
     private class FakeUserRepository(private val user: User?) : UserRepository {
         override fun findById(id: PublicId): User? = user
         override fun findByUsernameCaseInsensitive(username: String): User? = null
+        override fun search(query: String, limit: Int): List<User> = emptyList()
+
+        override fun updateProfile(user: User): User = user
+
+
         override fun save(user: User): User = user
     }
 
@@ -34,7 +39,8 @@ class GetUserContentInteractionStateUseCaseTest {
         override fun save(content: Content): Content = content
         override fun findPublicContent(
             instanceId: PublicId?, authorId: PublicId?, hasMedia: Boolean?,
-            cursor: com.contentplatform.backend.repository.ContentCursor?, limit: Int
+            cursor: com.contentplatform.backend.repository.ContentCursor?, limit: Int,
+            viewerAuthorId: PublicId?
         ): com.contentplatform.backend.repository.ContentBrowsePage =
             com.contentplatform.backend.repository.ContentBrowsePage(emptyList(), null)
         override fun searchPublicContent(

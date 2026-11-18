@@ -60,6 +60,16 @@ class UserControllerTest {
         id = PublicId(id),
         username = username,
         displayName = displayName,
+        avatar = null,
+
+        bio = null,
+
+        gender = "secret",
+
+        location = null,
+
+        cover = null,
+
         status = status,
         createdAt = 1000L,
         updatedAt = 2000L

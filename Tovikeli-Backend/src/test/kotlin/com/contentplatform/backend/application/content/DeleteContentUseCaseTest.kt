@@ -32,7 +32,7 @@ class DeleteContentUseCaseTest {
     @Test
     fun `delete missing content returns NOT_FOUND`() {
         val repository = FakeContentRepository(null)
-        val useCase = DeleteContentUseCase(repository, transactionTemplate())
+        val useCase = DeleteContentUseCase(repository, FakeAuthorRepository(), transactionTemplate())
 
         val result = useCase.delete(PublicId("ct_not_exist"), PublicId("caller_user"))
 
@@ -44,9 +44,9 @@ class DeleteContentUseCaseTest {
     fun `delete already deleted content returns INVALID_TRANSITION`() {
         val content = content(ContentStatus.DELETED)
         val repository = FakeContentRepository(content)
-        val useCase = DeleteContentUseCase(repository, transactionTemplate())
+        val useCase = DeleteContentUseCase(repository, FakeAuthorRepository(), transactionTemplate())
 
-        val result = useCase.delete(content.id)
+        val result = useCase.delete(content.id, PublicId("caller_user"))
 
         assertEquals(ContentLifecycleResult.INVALID_TRANSITION, result)
         assertEquals(0, repository.updateStatusCount)
@@ -56,9 +56,9 @@ class DeleteContentUseCaseTest {
     fun `delete hidden content returns INVALID_TRANSITION`() {
         val content = content(ContentStatus.HIDDEN)
         val repository = FakeContentRepository(content)
-        val useCase = DeleteContentUseCase(repository, transactionTemplate())
+        val useCase = DeleteContentUseCase(repository, FakeAuthorRepository(), transactionTemplate())
 
-        val result = useCase.delete(content.id)
+        val result = useCase.delete(content.id, PublicId("caller_user"))
 
         assertEquals(ContentLifecycleResult.INVALID_TRANSITION, result)
         assertEquals(0, repository.updateStatusCount)
@@ -68,9 +68,9 @@ class DeleteContentUseCaseTest {
     fun `delete unavailable content returns INVALID_TRANSITION`() {
         val content = content(ContentStatus.UNAVAILABLE)
         val repository = FakeContentRepository(content)
-        val useCase = DeleteContentUseCase(repository, transactionTemplate())
+        val useCase = DeleteContentUseCase(repository, FakeAuthorRepository(), transactionTemplate())
 
-        val result = useCase.delete(content.id)
+        val result = useCase.delete(content.id, PublicId("caller_user"))
 
         assertEquals(ContentLifecycleResult.INVALID_TRANSITION, result)
         assertEquals(0, repository.updateStatusCount)

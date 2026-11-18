@@ -46,6 +46,23 @@ class CreateInteractionUseCaseTest {
 
         override fun findByUsernameCaseInsensitive(username: String): User? = null
 
+        override fun search(query: String, limit: Int): List<User> = emptyList()
+
+
+
+        override fun updateProfile(user: User): User {
+
+
+            rows[user.id.value] = user
+
+
+            return user
+
+
+        }
+
+
+
         override fun save(user: User): User {
             rows[user.id.value] = user
             return user
@@ -81,7 +98,8 @@ class CreateInteractionUseCaseTest {
             authorId: PublicId?,
             hasMedia: Boolean?,
             cursor: ContentCursor?,
-            limit: Int
+            limit: Int,
+            viewerAuthorId: PublicId?
         ): ContentBrowsePage = throw UnsupportedOperationException("not used")
 
         override fun searchPublicContent(
@@ -213,6 +231,16 @@ class CreateInteractionUseCaseTest {
         id = userId,
         username = "alice",
         displayName = null,
+        avatar = null,
+
+        bio = null,
+
+        gender = "secret",
+
+        location = null,
+
+        cover = null,
+
         status = UserStatus.ACTIVE,
         createdAt = 1L,
         updatedAt = 1L
@@ -236,6 +264,7 @@ class CreateInteractionUseCaseTest {
         parentId = null,
         repostOfId = null,
         quoteOfId = null,
+        topicId = null,
         externalCreatedAt = null,
         createdAt = 1L,
         updatedAt = 1L,
@@ -252,6 +281,8 @@ class CreateInteractionUseCaseTest {
         val useCase = CreateInteractionUseCase(
             userRepository = users,
             contentRepository = contents,
+            authorRepository = org.mockito.Mockito.mock(com.contentplatform.backend.repository.AuthorRepository::class.java),
+            notifications = org.mockito.Mockito.mock(com.contentplatform.backend.application.notification.NotificationUseCase::class.java),
             instanceRepository = instances,
             interactionRepository = interactions,
             transactionTemplate = TransactionTemplate(txManager)

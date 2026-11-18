@@ -28,6 +28,23 @@ class GetUserInteractionHistoryUseCaseTest {
 
         override fun findByUsernameCaseInsensitive(username: String): User? = null
 
+        override fun search(query: String, limit: Int): List<User> = emptyList()
+
+
+
+        override fun updateProfile(user: User): User {
+
+
+            rows[user.id.value] = user
+
+
+            return user
+
+
+        }
+
+
+
         override fun save(user: User): User {
             rows[user.id.value] = user
             return user
@@ -78,7 +95,8 @@ class GetUserInteractionHistoryUseCaseTest {
         override fun save(content: Content): Content = content
         override fun findPublicContent(
             instanceId: PublicId?, authorId: PublicId?, hasMedia: Boolean?,
-            cursor: com.contentplatform.backend.repository.ContentCursor?, limit: Int
+            cursor: com.contentplatform.backend.repository.ContentCursor?, limit: Int,
+            viewerAuthorId: PublicId?
         ): com.contentplatform.backend.repository.ContentBrowsePage =
             com.contentplatform.backend.repository.ContentBrowsePage(emptyList(), null)
         override fun searchPublicContent(
@@ -105,6 +123,16 @@ class GetUserInteractionHistoryUseCaseTest {
         id = userId,
         username = "alice",
         displayName = "Alice",
+        avatar = null,
+
+        bio = null,
+
+        gender = "secret",
+
+        location = null,
+
+        cover = null,
+
         status = status,
         createdAt = 1L,
         updatedAt = 1L
@@ -136,6 +164,7 @@ class GetUserInteractionHistoryUseCaseTest {
         parentId = null,
         repostOfId = null,
         quoteOfId = null,
+        topicId = null,
         externalCreatedAt = null,
         createdAt = 1000L,
         updatedAt = 1000L,
@@ -146,7 +175,7 @@ class GetUserInteractionHistoryUseCaseTest {
         users: FakeUserRepository = FakeUserRepository().also { it.rows[userId.value] = user() },
         interactions: FakeInteractionRepository = FakeInteractionRepository(),
         contentRepo: FakeContentRepository = FakeContentRepository()
-    ) = GetUserInteractionHistoryUseCase(users, interactions, contentRepo)
+    ) = GetUserInteractionHistoryUseCase(users, interactions, contentRepo, org.mockito.Mockito.mock(com.contentplatform.backend.repository.AuthorRepository::class.java))
 
     // ------------------------------------------------------------------
     // 1. User exists -> InteractionRepository is called
@@ -243,7 +272,7 @@ class GetUserInteractionHistoryUseCaseTest {
     fun getHistory_whenUserNotFound_throwsUserNotFoundException() {
         val users = FakeUserRepository()
         val interactions = FakeInteractionRepository()
-        val uc = GetUserInteractionHistoryUseCase(users, interactions, FakeContentRepository())
+        val uc = GetUserInteractionHistoryUseCase(users, interactions, FakeContentRepository(), org.mockito.Mockito.mock(com.contentplatform.backend.repository.AuthorRepository::class.java))
 
         assertFailsWith<InteractionQueryUserNotFoundException> {
             uc.getHistory(userId, null, 20, null)
@@ -261,7 +290,7 @@ class GetUserInteractionHistoryUseCaseTest {
         users.rows[userId.value] = user(UserStatus.DISABLED)
         val interactions = FakeInteractionRepository()
         interactions.findResult = InteractionPage(listOf(interaction()), null)
-        val uc = GetUserInteractionHistoryUseCase(users, interactions, FakeContentRepository())
+        val uc = GetUserInteractionHistoryUseCase(users, interactions, FakeContentRepository(), org.mockito.Mockito.mock(com.contentplatform.backend.repository.AuthorRepository::class.java))
 
         val result = uc.getHistory(userId, null, 20, null)
 

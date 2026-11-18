@@ -49,6 +49,16 @@ class AuthControllerTest {
         id = PublicId(id),
         username = username,
         displayName = "Alice",
+        avatar = null,
+
+        bio = null,
+
+        gender = "secret",
+
+        location = null,
+
+        cover = null,
+
         status = UserStatus.ACTIVE,
         createdAt = 1000L,
         updatedAt = 2000L

@@ -120,6 +120,16 @@ class LogoutSessionLifecycleIntegrationTest {
         id = PublicId(aliceId),
         username = "alice",
         displayName = "Alice",
+        avatar = null,
+
+        bio = null,
+
+        gender = "secret",
+
+        location = null,
+
+        cover = null,
+
         status = UserStatus.ACTIVE,
         createdAt = 1_000_000L,
         updatedAt = 1_000_000L
@@ -129,6 +139,16 @@ class LogoutSessionLifecycleIntegrationTest {
         id = PublicId(bobId),
         username = "bob",
         displayName = "Bob",
+        avatar = null,
+
+        bio = null,
+
+        gender = "secret",
+
+        location = null,
+
+        cover = null,
+
         status = UserStatus.ACTIVE,
         createdAt = 1_000_000L,
         updatedAt = 1_000_000L
@@ -140,6 +160,16 @@ class LogoutSessionLifecycleIntegrationTest {
         id = PublicId(disabledId),
         username = "disabled",
         displayName = "Disabled",
+        avatar = null,
+
+        bio = null,
+
+        gender = "secret",
+
+        location = null,
+
+        cover = null,
+
         status = UserStatus.DISABLED,
         createdAt = 1_000_000L,
         updatedAt = 1_000_000L

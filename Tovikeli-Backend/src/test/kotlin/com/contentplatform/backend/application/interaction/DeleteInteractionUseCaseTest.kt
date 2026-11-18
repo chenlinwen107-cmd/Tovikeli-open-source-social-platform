@@ -61,6 +61,23 @@ class DeleteInteractionUseCaseTest {
     private class FakeUserRepository : UserRepository {
         val users = mutableMapOf<PublicId, User>()
 
+        override fun search(query: String, limit: Int): List<User> = emptyList()
+
+
+
+        override fun updateProfile(user: User): User {
+
+
+            users[user.id] = user
+
+
+            return user
+
+
+        }
+
+
+
         override fun save(user: User): User {
             users[user.id] = user
             return user
@@ -108,6 +125,16 @@ class DeleteInteractionUseCaseTest {
         id = id,
         username = id.value.removePrefix("usr_"),
         displayName = null,
+        avatar = null,
+
+        bio = null,
+
+        gender = "secret",
+
+        location = null,
+
+        cover = null,
+
         status = com.contentplatform.backend.domain.user.UserStatus.ACTIVE,
         createdAt = 1_000_000L,
         updatedAt = 1_000_000L
