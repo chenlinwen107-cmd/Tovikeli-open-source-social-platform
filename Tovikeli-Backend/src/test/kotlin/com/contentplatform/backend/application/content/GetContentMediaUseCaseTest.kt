@@ -1,6 +1,8 @@
 package com.contentplatform.backend.application.content
 
 import com.contentplatform.backend.application.media.GetMediaByIdsUseCase
+import com.contentplatform.backend.domain.author.Author
+import com.contentplatform.backend.repository.AuthorRepository
 import com.contentplatform.backend.application.media.ReadableMedia
 import com.contentplatform.backend.domain.common.PublicId
 import com.contentplatform.backend.domain.content.Content
@@ -40,7 +42,7 @@ class GetContentMediaUseCaseTest {
         override fun save(content: Content): Content = content
         override fun findPublicContent(
             instanceId: PublicId?, authorId: PublicId?, hasMedia: Boolean?,
-            cursor: ContentCursor?, limit: Int
+            cursor: ContentCursor?, limit: Int, viewerAuthorId: PublicId?
         ): ContentBrowsePage = ContentBrowsePage(emptyList(), null)
         override fun searchPublicContent(
             query: String, instanceId: PublicId?, authorId: PublicId?, sourceId: PublicId?, limit: Int
@@ -74,6 +76,16 @@ class GetContentMediaUseCaseTest {
         }
     }
 
+    private fun useCase(contentRepo: ContentRepository, mediaUc: GetMediaByIdsUseCase) =
+        GetContentMediaUseCase(
+            contentRepo,
+            mediaUc,
+            ContentAccessUseCase(contentRepo, object : AuthorRepository {
+                override fun findById(id: PublicId): Author? = null
+                override fun findByInstanceAndSourceAuthorId(instanceId: PublicId, sourceAuthorId: String): Author? = null
+                override fun save(author: Author): Author = author
+            })
+        )
     // ------------------------------------------------------------------
     // Fixtures
     // ------------------------------------------------------------------
@@ -147,7 +159,7 @@ class GetContentMediaUseCaseTest {
         val contentRepo = FakeContentRepository()
         contentRepo.findByIdResult = null
         val mediaUc = FakeGetMediaByIdsUseCase()
-        val useCase = GetContentMediaUseCase(contentRepo, mediaUc)
+        val useCase = useCase(contentRepo, mediaUc)
 
         val result = useCase.getMedia(PublicId("ct_missing"))
 
@@ -164,7 +176,7 @@ class GetContentMediaUseCaseTest {
         val contentRepo = FakeContentRepository()
         contentRepo.findByIdResult = content("ct_1", status = ContentStatus.DELETED)
         val mediaUc = FakeGetMediaByIdsUseCase()
-        val useCase = GetContentMediaUseCase(contentRepo, mediaUc)
+        val useCase = useCase(contentRepo, mediaUc)
 
         val result = useCase.getMedia(PublicId("ct_1"))
 
@@ -180,7 +192,7 @@ class GetContentMediaUseCaseTest {
         val contentRepo = FakeContentRepository()
         contentRepo.findByIdResult = content("ct_1", status = ContentStatus.HIDDEN)
         val mediaUc = FakeGetMediaByIdsUseCase()
-        val useCase = GetContentMediaUseCase(contentRepo, mediaUc)
+        val useCase = useCase(contentRepo, mediaUc)
 
         val result = useCase.getMedia(PublicId("ct_1"))
 
@@ -196,7 +208,7 @@ class GetContentMediaUseCaseTest {
         val contentRepo = FakeContentRepository()
         contentRepo.findByIdResult = content("ct_1", status = ContentStatus.UNAVAILABLE)
         val mediaUc = FakeGetMediaByIdsUseCase()
-        val useCase = GetContentMediaUseCase(contentRepo, mediaUc)
+        val useCase = useCase(contentRepo, mediaUc)
 
         val result = useCase.getMedia(PublicId("ct_1"))
 
@@ -212,7 +224,7 @@ class GetContentMediaUseCaseTest {
         val contentRepo = FakeContentRepository()
         contentRepo.findByIdResult = content("ct_1", status = ContentStatus.UNKNOWN)
         val mediaUc = FakeGetMediaByIdsUseCase()
-        val useCase = GetContentMediaUseCase(contentRepo, mediaUc)
+        val useCase = useCase(contentRepo, mediaUc)
 
         val result = useCase.getMedia(PublicId("ct_1"))
 
@@ -228,7 +240,7 @@ class GetContentMediaUseCaseTest {
         val contentRepo = FakeContentRepository()
         contentRepo.findByIdResult = content("ct_1", mediaIds = emptyList())
         val mediaUc = FakeGetMediaByIdsUseCase()
-        val useCase = GetContentMediaUseCase(contentRepo, mediaUc)
+        val useCase = useCase(contentRepo, mediaUc)
 
         val result = useCase.getMedia(PublicId("ct_1"))
 
@@ -246,7 +258,7 @@ class GetContentMediaUseCaseTest {
         contentRepo.findByIdResult = content("ct_1", mediaIds = listOf("md_a"))
         val mediaUc = FakeGetMediaByIdsUseCase()
         mediaUc.getByIdsResult = listOf(readableMedia(media("md_a")))
-        val useCase = GetContentMediaUseCase(contentRepo, mediaUc)
+        val useCase = useCase(contentRepo, mediaUc)
 
         val result = useCase.getMedia(PublicId("ct_1"))!!
 
@@ -268,7 +280,7 @@ class GetContentMediaUseCaseTest {
             readableMedia(media("md_b")),
             readableMedia(media("md_c"))
         )
-        val useCase = GetContentMediaUseCase(contentRepo, mediaUc)
+        val useCase = useCase(contentRepo, mediaUc)
 
         val result = useCase.getMedia(PublicId("ct_1"))!!
 
@@ -294,7 +306,7 @@ class GetContentMediaUseCaseTest {
             readableMedia(media("md_3")),
             readableMedia(media("md_1"))
         )
-        val useCase = GetContentMediaUseCase(contentRepo, mediaUc)
+        val useCase = useCase(contentRepo, mediaUc)
 
         val result = useCase.getMedia(PublicId("ct_1"))!!
 
@@ -318,7 +330,7 @@ class GetContentMediaUseCaseTest {
             readableMedia(media("md_a")),
             readableMedia(media("md_c"))
         )
-        val useCase = GetContentMediaUseCase(contentRepo, mediaUc)
+        val useCase = useCase(contentRepo, mediaUc)
 
         val result = useCase.getMedia(PublicId("ct_1"))!!
 
@@ -337,7 +349,7 @@ class GetContentMediaUseCaseTest {
         contentRepo.findByIdResult = content("ct_1", mediaIds = listOf("md_a", "md_b"))
         val mediaUc = FakeGetMediaByIdsUseCase()
         mediaUc.getByIdsResult = emptyList()
-        val useCase = GetContentMediaUseCase(contentRepo, mediaUc)
+        val useCase = useCase(contentRepo, mediaUc)
 
         val result = useCase.getMedia(PublicId("ct_1"))
 
@@ -354,7 +366,7 @@ class GetContentMediaUseCaseTest {
         contentRepo.findByIdResult = content("ct_target", mediaIds = listOf("md_a"))
         val mediaUc = FakeGetMediaByIdsUseCase()
         mediaUc.getByIdsResult = listOf(readableMedia(media("md_a")))
-        val useCase = GetContentMediaUseCase(contentRepo, mediaUc)
+        val useCase = useCase(contentRepo, mediaUc)
 
         useCase.getMedia(PublicId("ct_target"))
 
@@ -375,7 +387,7 @@ class GetContentMediaUseCaseTest {
             readableMedia(media("md_a")),
             readableMedia(media("md_b"))
         )
-        val useCase = GetContentMediaUseCase(contentRepo, mediaUc)
+        val useCase = useCase(contentRepo, mediaUc)
 
         useCase.getMedia(PublicId("ct_1"))
 
@@ -400,7 +412,7 @@ class GetContentMediaUseCaseTest {
             readableMedia(media("md_b")),
             readableMedia(media("md_c"))
         )
-        val useCase = GetContentMediaUseCase(contentRepo, mediaUc)
+        val useCase = useCase(contentRepo, mediaUc)
 
         useCase.getMedia(PublicId("ct_1"))
 
@@ -417,7 +429,7 @@ class GetContentMediaUseCaseTest {
         val contentRepo = FakeContentRepository()
         contentRepo.findByIdResult = content("ct_1", status = ContentStatus.DELETED, mediaIds = listOf("md_a"))
         val mediaUc = FakeGetMediaByIdsUseCase()
-        val useCase = GetContentMediaUseCase(contentRepo, mediaUc)
+        val useCase = useCase(contentRepo, mediaUc)
 
         useCase.getMedia(PublicId("ct_1"))
 
