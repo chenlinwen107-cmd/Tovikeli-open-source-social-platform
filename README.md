@@ -4,6 +4,12 @@ Tovikeli is a self-hostable social platform with a separately maintained web fro
 
 **中文简介：** Tovikeli 是一个可自行部署的社交平台项目。前端与后端分开存放，使用者可以按需获取其中一个，也可以组合部署完整服务。
 
+## Live preview
+
+A live preview deployment is available at: https://proud-cell-10b7.chenlinwen107.workers.dev/
+
+The preview is provided for evaluation and may be unavailable or change independently of the source code.
+
 ## Repository layout
 
 - **Tovikeli-Frontend/** — React 19, TypeScript, HeroUI, Tailwind CSS 4 and Vite.
